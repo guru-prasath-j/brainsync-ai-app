@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, notes, summaries, flashcards, quizzes, chat
+from app.api import auth
 
 app = FastAPI(
     title="BrainSync AI API",
@@ -18,17 +18,19 @@ app.add_middleware(
 )
 
 # Routers (added incrementally over 20 days)
-# app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 # app.include_router(notes.router, prefix="/api/notes", tags=["notes"])
 # app.include_router(summaries.router, prefix="/api/summaries", tags=["summaries"])
 # app.include_router(flashcards.router, prefix="/api/flashcards", tags=["flashcards"])
 # app.include_router(quizzes.router, prefix="/api/quizzes", tags=["quizzes"])
 # app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to BrainSync AI API 🧠", "version": "1.0.0"}
+    return {"message": "BrainSync AI API", "version": "1.0.0", "status": "running"}
+
 
 @app.get("/health")
-async def health():
+async def health_check():
     return {"status": "healthy"}
