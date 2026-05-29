@@ -1,46 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/splash_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/register_screen.dart';
 import '../screens/home_screen.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/register_screen.dart';
+import '../screens/profile_screen.dart';
 
-Future<bool> _isLoggedIn() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
-  return token != null && token.isNotEmpty;
+class AppRouter {
+  static const String splash = '/';
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String home = '/home';
+  static const String profile = '/profile';
+
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case splash:
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
+      case login:
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
+      case register:
+        return MaterialPageRoute(builder: (_) => const RegisterScreen());
+      case home:
+        return MaterialPageRoute(builder: (_) => const HomeScreen());
+      case profile:
+        return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      default:
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: Text('No route defined for ${settings.name}'),
+            ),
+          ),
+        );
+    }
+  }
 }
-
-final appRouter = GoRouter(
-  initialLocation: '/splash',
-  redirect: (BuildContext context, GoRouterState state) async {
-    final loggedIn = await _isLoggedIn();
-    final onAuth = state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register' ||
-        state.matchedLocation == '/splash';
-
-    if (!loggedIn && !onAuth) return '/login';
-    if (loggedIn && (state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register')) return '/home';
-    return null;
-  },
-  routes: [
-    GoRoute(
-      path: '/splash',
-      builder: (context, state) => const SplashScreen(),
-    ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const HomeScreen(),
-    ),
-  ],
-);
