@@ -1,26 +1,22 @@
 import os
-import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+
 from alembic import context
 
-# Add parent directory to path so we can import app modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app.core.database import Base  # noqa: E402
-
-# Import all models so Alembic can detect them
-from app.models import user, note  # noqa: F401, E402
+# Import Base from our app
+from app.core.database import Base  # noqa: F401
+import app.models  # noqa: F401 - ensure all models are imported
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with DATABASE_URL from environment
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    config.set_main_option("sqlalchemy.url", database_url)
+# Override sqlalchemy.url with environment variable
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/brainsync")
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
