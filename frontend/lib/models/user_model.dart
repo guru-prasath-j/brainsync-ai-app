@@ -5,7 +5,7 @@ class UserModel {
   final bool isActive;
   final DateTime createdAt;
 
-  UserModel({
+  const UserModel({
     required this.id,
     required this.email,
     this.fullName,
@@ -18,7 +18,7 @@ class UserModel {
       id: json['id'] as int,
       email: json['email'] as String,
       fullName: json['full_name'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
+      isActive: json['is_active'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -33,24 +33,20 @@ class UserModel {
     };
   }
 
+  String get displayName => fullName?.isNotEmpty == true ? fullName! : email.split('@').first;
+
   String get initials {
     if (fullName != null && fullName!.isNotEmpty) {
       final parts = fullName!.trim().split(' ');
       if (parts.length >= 2) {
-        return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        return parts[0][0].toUpperCase() + parts[1][0].toUpperCase();
       }
       return fullName![0].toUpperCase();
     }
     return email[0].toUpperCase();
   }
 
-  UserModel copyWith({
-    int? id,
-    String? email,
-    String? fullName,
-    bool? isActive,
-    DateTime? createdAt,
-  }) {
+  UserModel copyWith({int? id, String? email, String? fullName, bool? isActive, DateTime? createdAt}) {
     return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
