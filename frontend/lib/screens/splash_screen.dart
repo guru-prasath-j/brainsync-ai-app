@@ -10,56 +10,61 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+
+    _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
-    _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
-    _animationController.forward();
-    _navigateAfterDelay();
+
+    _controller.forward();
+
+    // After animation, check auth state and navigate
+    Future.delayed(const Duration(milliseconds: 2000), _navigate);
+  }
+
+  Future<void> _navigate() async {
+    if (!mounted) return;
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, isLoggedIn ? '/home' : '/login');
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(milliseconds: 2200));
-    if (!mounted) return;
-    final isLoggedIn = await AuthService.isLoggedIn();
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(isLoggedIn ? '/home' : '/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF7C3AED),
+      backgroundColor: const Color(0xFF6C63FF),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 96,
+                  height: 96,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
@@ -72,18 +77,18 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                   child: const Icon(
-                    Icons.psychology_outlined,
-                    size: 60,
-                    color: Color(0xFF7C3AED),
+                    Icons.psychology_rounded,
+                    size: 56,
+                    color: Color(0xFF6C63FF),
                   ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
                   'BrainSync AI',
                   style: TextStyle(
+                    color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -91,9 +96,19 @@ class _SplashScreenState extends State<SplashScreen>
                 Text(
                   'Your AI Study Companion',
                   style: TextStyle(
-                    fontSize: 16,
                     color: Colors.white.withOpacity(0.85),
-                    letterSpacing: 0.5,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white.withOpacity(0.7),
+                    ),
                   ),
                 ),
               ],
