@@ -14,7 +14,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    full_name: str
+    full_name: Optional[str] = None
 
 
 class PasswordChange(BaseModel):
@@ -34,7 +34,7 @@ class UserResponse(UserBase):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str
 
 
 class TokenData(BaseModel):
