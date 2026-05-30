@@ -6,23 +6,18 @@ import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 
 class AppRouter {
-  static const String splash = '/';
-  static const String login = '/login';
-  static const String register = '/register';
-  static const String home = '/home';
-  static const String profile = '/profile';
-
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case splash:
+      case '/':
+      case '/splash':
         return MaterialPageRoute(builder: (_) => const SplashScreen());
-      case login:
+      case '/login':
         return MaterialPageRoute(builder: (_) => const LoginScreen());
-      case register:
+      case '/register':
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
-      case home:
+      case '/home':
         return MaterialPageRoute(builder: (_) => const HomeScreen());
-      case profile:
+      case '/profile':
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
       default:
         return MaterialPageRoute(
