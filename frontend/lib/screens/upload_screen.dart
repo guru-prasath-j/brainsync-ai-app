@@ -1,25 +1,63 @@
-"""File upload screen."""
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:go_router/go_router.dart';
-
-import '../services/notes_service.dart';
-
+import 'package:brainsync/services/notes_service.dart';
 
 class UploadScreen extends StatefulWidget {
-  const UploadScreen({Key? key}) : super(key: key);
+  const UploadScreen({super.key});
 
   @override
   State<UploadScreen> createState() => _UploadScreenState();
 }
 
 class _UploadScreenState extends State<UploadScreen> {
-  final NotesService _notesService = NotesService();
-  final TextEditingController _titleController = TextEditingController();
-  String? _selectedFilePath;
-  String? _selectedFileName;
-  double _uploadProgress = 0.0;
+  final _titleController = TextEditingController();
+  final _notesService = NotesService();
+  PlatformFile? _selectedFile;
+  double _uploadProgress = 0;
   bool _isUploading = false;
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'txt', 'md'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      setState(() => _selectedFile = result.files.first);
+    }
+  }
+
+  Future<void> _upload() async {
+    if (_selectedFile == null || _titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a file and enter a title')),
+      );
+      return;
+    }
+    setState(() { _isUploading = true; _uploadProgress = 0; });
+    try {
+      await _notesService.uploadNote(
+        filePath: _selectedFile!.path!,
+        title: _titleController.text.trim(),
+        onProgress: (sent, total) {
+          setState(() => _uploadProgress = sent / total);
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File uploaded successfully!')),
+        );
+        Navigator.pushReplacementNamed(context, '/notes');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: ' + e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -27,120 +65,60 @@ class _UploadScreenState extends State<UploadScreen> {
     super.dispose();
   }
 
-  Future<void> _pickFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'txt', 'md'],
-      );
-
-      if (result != null) {
-        setState(() {
-          _selectedFilePath = result.files.single.path;
-          _selectedFileName = result.files.single.name;
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
-    }
-  }
-
-  Future<void> _uploadFile() async {
-    if (_selectedFilePath == null || _titleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a file and enter a title')),
-      );
-      return;
-    }
-
-    setState(() => _isUploading = true);
-
-    try {
-      await _notesService.uploadNote(
-        _selectedFilePath!,
-        _titleController.text,
-        onProgress: (progress) {
-          setState(() => _uploadProgress = progress);
-        },
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File uploaded successfully!')),
-        );
-        context.go('/notes');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload Note')),
+      appBar: AppBar(title: const Text('Upload Study Material')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                hintText: 'Enter note title',
+                labelText: 'Title',
                 border: OutlineInputBorder(),
+                hintText: 'Enter a title for this material',
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            OutlinedButton.icon(
               onPressed: _isUploading ? null : _pickFile,
               icon: const Icon(Icons.attach_file),
-              label: const Text('Pick File'),
+              label: Text(_selectedFile != null
+                  ? _selectedFile!.name
+                  : 'Select PDF or Text File'),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(16)),
             ),
-            const SizedBox(height: 16),
-            if (_selectedFileName != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.insert_drive_file),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_selectedFileName!),
-                          const Text('Ready to upload'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (_isUploading) ...[
-                LinearProgressIndicator(value: _uploadProgress),
-                const SizedBox(height: 12),
-                Text('${(_uploadProgress * 100).toStringAsFixed(0)}%'),
-              ],
-              ElevatedButton(
-                onPressed: _isUploading ? null : _uploadFile,
-                child: const Text('Upload'),
+            if (_selectedFile != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Size: ' + (_selectedFile!.size / 1024).toStringAsFixed(1) + ' KB',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
+            const SizedBox(height: 32),
+            if (_isUploading) ...[
+              LinearProgressIndicator(value: _uploadProgress),
+              const SizedBox(height: 8),
+              Text('Uploading... ' + (_uploadProgress * 100).toStringAsFixed(0) + '%',
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+            ],
+            ElevatedButton.icon(
+              onPressed: _isUploading ? null : _upload,
+              icon: _isUploading
+                  ? const SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.cloud_upload),
+              label: Text(_isUploading ? 'Uploading...' : 'Upload'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: const Color(0xFF6C63FF),
+                foregroundColor: Colors.white,
+              ),
+            ),
           ],
         ),
       ),
