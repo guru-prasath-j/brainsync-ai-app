@@ -1,6 +1,4 @@
-"""Note model for Flutter."""
-import 'package:intl/intl.dart';
-
+import 'dart:convert';
 
 class NoteModel {
   final int id;
@@ -21,26 +19,25 @@ class NoteModel {
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
     return NoteModel(
-      id: json['id'] ?? 0,
-      title: json['title'] ?? '',
-      fileName: json['file_name'] ?? '',
-      fileSize: json['file_size'] ?? 0,
-      status: json['status'] ?? 'uploaded',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      id: json['id'] as int,
+      title: json['title'] as String,
+      fileName: json['file_name'] as String,
+      fileSize: json['file_size'] as int,
+      status: json['status'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'file_name': fileName,
-    'file_size': fileSize,
-    'status': status,
-    'created_at': createdAt.toIso8601String(),
-  };
+        'id': id,
+        'title': title,
+        'file_name': fileName,
+        'file_size': fileSize,
+        'status': status,
+        'created_at': createdAt.toIso8601String(),
+      };
 
-  String get formattedDate => DateFormat('MMM d, yyyy').format(createdAt);
-  String get formattedSize {
+  String get fileSizeFormatted {
     if (fileSize < 1024) return '$fileSize B';
     if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
     return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
