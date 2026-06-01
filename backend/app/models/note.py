@@ -1,19 +1,24 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
-from sqlalchemy.sql import func
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+
 
 class Note(Base):
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False)
-    file_path = Column(String)
-    raw_text = Column(Text)
-    summary = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_size = Column(BigInteger, default=0)
+    file_path = Column(String(512), nullable=False)
+    status = Column(String(50), default="uploaded", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    user = relationship("User", back_populates="notes")
-    flashcards = relationship("Flashcard", back_populates="note")
-    quiz_sessions = relationship("QuizSession", back_populates="note")
+    # Relationships
+    owner = relationship("User", back_populates="notes")
+
+    def __repr__(self) -> str:
+        return f"<Note id={self.id} title={self.title!r} status={self.status!r}>"
