@@ -1,78 +1,45 @@
-"""Notes service for API calls."""
+import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
-
-import '../models/note_model.dart';
-import 'auth_service.dart';
-
+import 'package:brainsync/core/api_client.dart';
+import 'package:brainsync/models/note_model.dart';
 
 class NotesService {
-  final Dio _dio = Dio();
-  final AuthService _authService = AuthService();
+  final Dio _dio = ApiClient.instance;
 
-  NotesService() {
-    _dio.options.baseUrl = 'http://localhost:8000/api';
-    _setupInterceptors();
-  }
-
-  void _setupInterceptors() {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await _authService.getToken();
-          options.headers['Authorization'] = 'Bearer $token';
-          return handler.next(options);
-        },
-      ),
-    );
-  }
-
-  Future<NoteModel> uploadNote(
-    String filePath,
-    String title, {
-    Function(double)? onProgress,
+  Future<NoteModel> uploadNote({
+    required String filePath,
+    required String title,
+    void Function(int sent, int total)? onProgress,
   }) async {
-    try {
-      final file = await MultipartFile.fromFile(filePath);
-      final formData = FormData.fromMap({
-        'file': file,
-        'title': title,
-      });
+    final file = await MultipartFile.fromFile(filePath);
+    final formData = FormData.fromMap({
+      'title': title,
+      'file': file,
+    });
 
-      final response = await _dio.post(
-        '/notes/upload',
-        data: formData,
-        onSendProgress: (sent, total) {
-          if (onProgress != null) {
-            onProgress(sent / total);
-          }
-        },
-      );
+    final response = await _dio.post(
+      '/api/notes/upload',
+      data: formData,
+      onSendProgress: onProgress,
+    );
 
-      return NoteModel.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    return NoteModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<List<NoteModel>> getNotes() async {
-    try {
-      final response = await _dio.get('/notes/');
-      final notes = (response.data as List)
-          .map((note) => NoteModel.fromJson(note))
-          .toList();
-      return notes;
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _dio.get('/api/notes/');
+    final List<dynamic> data = response.data as List<dynamic>;
+    return data
+        .map((e) => NoteModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<NoteModel> getNoteById(int id) async {
-    try {
-      final response = await _dio.get('/notes/$id');
-      return NoteModel.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _dio.get('/api/notes/' + id.toString());
+    return NoteModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteNote(int id) async {
+    await _dio.delete('/api/notes/' + id.toString());
   }
 }
