@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -7,12 +7,13 @@ from app.core.security import get_current_user
 from app.core.storage import save_upload_file
 from app.models.note import Note
 from app.models.user import User
-from app.schemas.note import NoteResponse, NoteCreate
+from app.schemas.note import NoteResponse
+from app.tasks.process_note import process_note
 
 router = APIRouter()
 
 
-@router.post("/upload", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/upload", response_model=NoteResponse, status_code=201)
 async def upload_note(
     background_tasks: BackgroundTasks,
     title: str = Form(...),
@@ -20,27 +21,35 @@ async def upload_note(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Upload a file and create a note record."""
-    allowed_types = ["application/pdf", "text/plain", "text/markdown"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File type '{file.content_type}' not allowed. Use PDF or text files.",
-        )
+    """Upload a PDF/text file and queue it for processing."""
+    allowed_types = {
+        "application/pdf",
+        "text/plain",
+        "application/octet-stream",
+    }
+    if file.content_type not in allowed_types and not file.filename.endswith((".pdf", ".txt")):
+        raise HTTPException(status_code=400, detail="Only PDF and text files are supported.")
 
     file_path = await save_upload_file(file, current_user.id)
+
+    # Read file size after save
+    import os
+    file_size = os.path.getsize(file_path)
 
     note = Note(
         user_id=current_user.id,
         title=title,
         file_name=file.filename,
-        file_size=file.size or 0,
+        file_size=file_size,
         file_path=file_path,
         status="uploaded",
     )
     db.add(note)
     db.commit()
     db.refresh(note)
+
+    # Queue background processing
+    background_tasks.add_task(process_note, note.id)
 
     return note
 
@@ -66,22 +75,12 @@ def get_note(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get a single note by ID."""
-    note = db.query(Note).filter(Note.id == note_id, Note.user_id == current_user.id).first()
+    """Get a single note by ID (must belong to current user)."""
+    note = (
+        db.query(Note)
+        .filter(Note.id == note_id, Note.user_id == current_user.id)
+        .first()
+    )
     if not note:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+        raise HTTPException(status_code=404, detail="Note not found.")
     return note
-
-
-@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_note(
-    note_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Delete a note by ID."""
-    note = db.query(Note).filter(Note.id == note_id, Note.user_id == current_user.id).first()
-    if not note:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
-    db.delete(note)
-    db.commit()
