@@ -1,84 +1,71 @@
-import uuid
+import logging
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
+from app.core.database import get_db
 from app.models.note import Note
-from app.services.pdf_service import pdf_service
-from app.services.vector_store import vector_store_service
+from app.services.pdf_service import PDFService
+from app.services.vector_store import VectorStoreService
 
-COLLECTION_NAME = "brainsync_notes"
+logger = logging.getLogger(__name__)
+
+pdf_service = PDFService()
+vector_store = VectorStoreService()
 
 
-async def process_note(note_id: int, db: Session = None) -> None:
+async def process_note(note_id: int, db: Session) -> None:
     """
-    Background task: extract text from an uploaded note file,
-    chunk it, embed it into ChromaDB, and update the note status.
-
-    Args:
-        note_id: Primary key of the Note record to process
-        db: Optional SQLAlchemy session; creates its own if not provided
+    Background task: extract text from uploaded file, chunk it,
+    store in ChromaDB, and update note status.
     """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
+    note = db.query(Note).filter(Note.id == note_id).first()
+    if not note:
+        logger.error(f"Note {note_id} not found for processing")
+        return
 
     try:
-        note = db.query(Note).filter(Note.id == note_id).first()
-        if not note:
-            return
-
-        # Mark as processing
+        # Update status to processing
         note.status = "processing"
         db.commit()
 
-        # 1. Extract text
-        raw_text = pdf_service.extract_text(note.file_path)
+        # Extract text based on file type
+        file_path = note.file_path
+        file_name = note.file_name.lower()
 
-        # 2. Clean text
+        if file_name.endswith(".pdf"):
+            raw_text = pdf_service.extract_text(file_path)
+        else:
+            # Plain text files
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                raw_text = f.read()
+
+        # Clean and chunk
         clean = pdf_service.clean_text(raw_text)
-
-        # 3. Chunk text
         chunks = pdf_service.chunk_text(clean, chunk_size=500, overlap=50)
 
-        if chunks:
-            # 4. Build metadata and IDs
-            metadatas = [
-                {
-                    "note_id": note_id,
-                    "user_id": note.user_id,
-                    "chunk_index": i,
-                    "title": note.title,
-                }
-                for i, _ in enumerate(chunks)
-            ]
-            ids = [f"note_{note_id}_chunk_{i}_{uuid.uuid4().hex[:8]}" for i in range(len(chunks))]
+        if not chunks:
+            logger.warning(f"No text extracted from note {note_id}")
+            note.status = "failed"
+            db.commit()
+            return
 
-            # 5. Remove stale chunks for this note (re-processing scenario)
-            vector_store_service.delete_chunks_by_note(COLLECTION_NAME, note_id)
+        # Store in ChromaDB collection named by note id
+        collection_name = f"note_{note_id}"
+        metadata = [
+            {"note_id": note_id, "user_id": note.user_id, "chunk_index": i}
+            for i in range(len(chunks))
+        ]
+        vector_store.add_chunks(
+            collection_name=collection_name,
+            chunks=chunks,
+            metadata=metadata,
+        )
 
-            # 6. Store in ChromaDB
-            vector_store_service.add_chunks(
-                collection_name=COLLECTION_NAME,
-                chunks=chunks,
-                metadata=metadatas,
-                ids=ids,
-            )
-
-        # 7. Mark as processed
+        # Mark as processed
         note.status = "processed"
         db.commit()
+        logger.info(f"Note {note_id} processed: {len(chunks)} chunks stored")
 
-    except Exception as exc:
-        # Mark as failed and re-raise so caller can log
-        try:
-            if note:
-                note.status = "failed"
-                db.commit()
-        except Exception:
-            pass
-        raise exc
-
-    finally:
-        if close_db:
-            db.close()
+    except Exception as e:
+        logger.error(f"Error processing note {note_id}: {e}", exc_info=True)
+        note.status = "failed"
+        db.commit()
