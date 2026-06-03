@@ -1,1 +1,1 @@
-# Background task package for BrainSync AI
+# Background task modules
