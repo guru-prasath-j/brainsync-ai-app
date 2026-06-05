@@ -1,50 +1,109 @@
-import openai
+"""
+AI Service - GPT-4o-mini integration for text summarization.
+"""
+import json
 import os
-from typing import Any
+from typing import Optional
 
-client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+import openai
+from openai import AsyncOpenAI
+
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+SUMMARIZE_SYSTEM_PROMPT = """You are an expert study assistant that helps students understand complex material.
+When given text content, produce a structured summary with:
+1. A concise TL;DR (2-3 sentences)
+2. 3-7 key points (bullet form, each 1-2 sentences)
+3. 5-10 important concepts/terms
+
+Return ONLY valid JSON with this exact structure:
+{
+  "tldr": "...",
+  "key_points": ["...", "..."],
+  "concepts": ["term1", "term2", ...]
+}"""
 
 
 class AIService:
-    """Service for AI-powered summarization using GPT-4o-mini."""
+    """Service for AI-powered text analysis using GPT-4o-mini."""
 
-    MODEL = "gpt-4o-mini"
+    def __init__(self):
+        self.model = "gpt-4o-mini"
+        self.max_tokens = 4096
 
-    async def summarize(self, text: str) -> dict[str, Any]:
+    async def summarize(self, text: str, max_chunk_chars: int = 12000) -> dict:
         """
-        Summarize the provided text.
+        Summarize text content and return structured data.
 
-        Returns a dict with:
-          - tldr: one-sentence summary
-          - key_points: list of key points (up to 7)
-          - concepts: list of important concepts/terms
+        Args:
+            text: The text to summarize
+            max_chunk_chars: Maximum characters to send in one request
+
+        Returns:
+            dict with keys: tldr, key_points, concepts
         """
-        prompt = (
-            "You are an expert study assistant. Analyze the following text and provide:\n"
-            "1. A concise TL;DR (one sentence).\n"
-            "2. Key points (up to 7 bullet points).\n"
-            "3. Important concepts or terms (as a list of short phrases).\n\n"
-            "Respond ONLY with valid JSON in this exact shape:\n"
-            '{\n'
-            '  "tldr": "...",\n'
-            '  "key_points": ["...", "..."],\n'
-            '  "concepts": ["...", "..."]\n'
-            '}\n\n'
-            f"TEXT:\n{text[:8000]}"
-        )
+        # Truncate if too long (GPT-4o-mini context limit safety)
+        if len(text) > max_chunk_chars:
+            text = text[:max_chunk_chars] + "\n\n[Content truncated for summarization]"
 
+        try:
+            response = await client.chat.completions.create(
+                model=self.model,
+                max_tokens=self.max_tokens,
+                temperature=0.3,
+                messages=[
+                    {"role": "system", "content": SUMMARIZE_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": f"Please summarize the following study material:\n\n{text}",
+                    },
+                ],
+            )
+
+            raw = response.choices[0].message.content.strip()
+
+            # Strip markdown code fences if present
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+                raw = raw.strip()
+
+            result = json.loads(raw)
+            return {
+                "tldr": result.get("tldr", ""),
+                "key_points": result.get("key_points", []),
+                "concepts": result.get("concepts", []),
+            }
+
+        except json.JSONDecodeError as e:
+            # Fallback: return raw text in tldr
+            return {
+                "tldr": raw[:500] if "raw" in dir() else "Summary unavailable",
+                "key_points": [],
+                "concepts": [],
+            }
+        except openai.OpenAIError as e:
+            raise RuntimeError(f"OpenAI API error: {str(e)}") from e
+
+    async def generate_title(self, text: str) -> str:
+        """Generate a concise title for a piece of text."""
+        truncated = text[:2000]
         response = await client.chat.completions.create(
-            model=self.MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-            temperature=0.3,
+            model=self.model,
+            max_tokens=30,
+            temperature=0.5,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"Generate a short (max 6 words) descriptive title for this text:\n\n{truncated}"
+                        "\n\nReturn only the title, no quotes."
+                    ),
+                }
+            ],
         )
+        return response.choices[0].message.content.strip().strip('"')
 
-        import json
-        raw = response.choices[0].message.content
-        return json.loads(raw)
 
-    async def generate_tldr(self, text: str) -> str:
-        """Quick one-sentence summary."""
-        result = await self.summarize(text)
-        return result.get("tldr", "")
+ai_service = AIService()
