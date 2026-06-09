@@ -23,3 +23,6 @@ app.include_router(quizzes.router, prefix='/api/quizzes', tags=['quizzes'])
 @app.get('/health')
 def health_check():
     return {'status': 'ok', 'service': 'BrainSync AI'}
+# Chat (RAG) endpoints
+from app.api import chat as chat_router
+app.include_router(chat_router.router, prefix="/api/chat", tags=["chat"])
