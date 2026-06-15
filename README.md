@@ -1,94 +1,212 @@
-# BrainSync AI — Intelligent Study Companion
+# BrainSync AI — Full-Stack AI Study Companion
 
-> A full-stack AI-powered study app that transforms your PDFs and notes into summaries, flashcards, quizzes, and a RAG-powered chat interface.
+BrainSync AI turns your study notes and PDFs into interactive learning experiences powered by GPT-4 and ChromaDB RAG.
 
-**Flutter** · **FastAPI** · **PostgreSQL** · **OpenAI GPT-4** · **ChromaDB** · **JWT Auth**
-
-## Features
-
-- 📄 **PDF Upload & Parsing** — upload study material, extract and chunk text automatically
-- 🧠 **AI Summarization** — GPT-4o-mini generates TL;DR, key points, and core concepts
-- 🃏 **Flashcard Generation** — AI creates question/answer cards with difficulty ratings
-- ❓ **Quiz Engine** — MCQ quizzes with explanations, scoring, and history
-- 💬 **RAG Chat** — ask questions about your notes; answers grounded in your own documents via ChromaDB retrieval
-- 📊 **Progress Dashboard** — study streaks, activity chart, session stats
-
-## Architecture
-
-```
-Flutter App (Dart)
-       ↕ HTTP / Dio
-FastAPI Backend (Python)
-       ↕
-  ┌────────────────────────────────┐
-  │  PostgreSQL (users, notes,     │
-  │  flashcards, quizzes, chats)   │
-  └────────────────────────────────┘
-       ↕
-  ChromaDB Vector Store
-  (document chunks + embeddings)
-       ↕
-  OpenAI GPT-4 / GPT-4o-mini
-  (summarize, generate, chat)
-```
+---
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Mobile Frontend | Flutter 3 (Dart) |
-| Backend API | FastAPI + Python 3.11 |
-| Database | PostgreSQL + SQLAlchemy + Alembic |
-| Vector Store | ChromaDB |
-| AI Models | OpenAI GPT-4, GPT-4o-mini |
-| Auth | JWT (python-jose) + bcrypt |
-| File Storage | Local filesystem (uploads/) |
+| Mobile Frontend | Flutter (Dart) |
+| Backend API | FastAPI (Python 3.11) |
+| Database | PostgreSQL + SQLAlchemy |
+| Migrations | Alembic |
+| AI / LLM | OpenAI GPT-4o-mini |
+| Vector Store | ChromaDB (RAG) |
+| Auth | JWT (python-jose) |
+| File Storage | Local filesystem (S3-ready) |
 | CI | GitHub Actions |
 
-## Getting Started
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # add DATABASE_URL and OPENAI_API_KEY
-alembic upgrade head
-make run
-```
-
-### Frontend
-
-```bash
-cd frontend
-flutter pub get
-flutter run
-```
+---
 
 ## Project Structure
 
 ```
 brainsync-ai-app/
-├── backend/
+├── backend/                 # FastAPI backend
 │   ├── app/
-│   │   ├── api/          # FastAPI routers (auth, users, notes, summaries, flashcards, quiz, chat)
-│   │   ├── core/         # DB, config, security, storage
-│   │   ├── models/       # SQLAlchemy ORM models
-│   │   ├── schemas/      # Pydantic request/response schemas
-│   │   ├── services/     # AI, PDF parsing, RAG, vector store
-│   │   └── tasks/        # Background processing (note ingestion)
-│   └── alembic/          # DB migrations
-└── frontend/
-    └── lib/
-        ├── core/         # Router, theme, API client
-        ├── models/       # Dart data models
-        ├── screens/      # UI screens
-        ├── services/     # API service layer
-        └── widgets/      # Reusable components
+│   │   ├── api/             # Route handlers
+│   │   │   ├── auth.py
+│   │   │   ├── users.py
+│   │   │   ├── notes.py
+│   │   │   ├── summaries.py
+│   │   │   ├── flashcards.py
+│   │   │   ├── quizzes.py
+│   │   │   ├── chat.py
+│   │   │   └── progress.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── security.py
+│   │   │   ├── exceptions.py
+│   │   │   └── middleware.py
+│   │   ├── models/          # SQLAlchemy ORM models
+│   │   ├── schemas/         # Pydantic schemas
+│   │   ├── services/        # Business logic & AI services
+│   │   └── tasks/           # Background tasks
+│   ├── alembic/             # DB migrations
+│   ├── alembic.ini
+│   ├── requirements.txt
+│   ├── Makefile
+│   ├── pyproject.toml
+│   └── .flake8
+├── frontend/                # Flutter app
+│   ├── lib/
+│   │   ├── core/
+│   │   │   ├── router.dart
+│   │   │   └── theme.dart
+│   │   ├── models/
+│   │   ├── screens/
+│   │   ├── services/
+│   │   └── widgets/
+│   └── analysis_options.yaml
+└── .github/workflows/ci.yml
 ```
 
-## Related Projects
+---
 
-- [self-healing-rag-eval](https://github.com/guru-prasath-j/self-healing-rag-eval) — Production RAG pipeline with LangGraph + self-healing critic loop
-- [pocketmind](https://github.com/guru-prasath-j/pocketmind) — On-device AI with local LLM on Flutter
+## Backend Setup
+
+### Prerequisites
+- Python 3.11+
+- PostgreSQL running locally (or via Docker)
+- OpenAI API key
+
+### Installation
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Environment Variables
+
+Create `backend/.env`:
+
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/brainsync
+SECRET_KEY=your-super-secret-jwt-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+OPENAI_API_KEY=sk-...
+UPLOAD_DIR=uploads
+```
+
+### Database
+
+```bash
+make migrate          # run alembic upgrade head
+```
+
+### Run
+
+```bash
+make run              # uvicorn with hot-reload on :8000
+```
+
+Interactive docs: http://localhost:8000/docs
+
+### Lint & Format
+
+```bash
+make lint             # flake8 + black --check
+make format           # black . && isort .
+make test             # pytest
+```
+
+---
+
+## Frontend Setup
+
+### Prerequisites
+- Flutter SDK ≥ 3.19 (stable channel)
+
+### Installation
+
+```bash
+cd frontend
+flutter pub get
+```
+
+### Configuration
+
+Edit `frontend/lib/core/config.dart` (or your API base URL constant) to point to your backend:
+
+```dart
+const String kBaseUrl = 'http://localhost:8000/api';
+```
+
+### Run
+
+```bash
+flutter run            # pick a device / simulator
+```
+
+### Analyze
+
+```bash
+flutter analyze
+flutter test
+```
+
+---
+
+## API Reference
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | /api/auth/register | ✗ | Register new user |
+| POST | /api/auth/login | ✗ | Login, receive JWT |
+| GET | /api/users/me | ✓ | Get current user profile |
+| PUT | /api/users/me | ✓ | Update display name |
+| PATCH | /api/users/me/password | ✓ | Change password |
+| POST | /api/notes/upload | ✓ | Upload PDF/text note |
+| GET | /api/notes/ | ✓ | List user's notes |
+| GET | /api/notes/{id} | ✓ | Get single note |
+| GET | /api/summaries/{note_id} | ✓ | Get AI summary |
+| POST | /api/summaries/{note_id}/generate | ✓ | Generate AI summary |
+| POST | /api/flashcards/{note_id}/generate | ✓ | Generate flashcards |
+| GET | /api/flashcards/{note_id} | ✓ | List flashcards |
+| PATCH | /api/flashcards/{id}/rate | ✓ | Rate a flashcard |
+| POST | /api/quizzes/{note_id}/generate | ✓ | Generate MCQ quiz |
+| POST | /api/quizzes/{session_id}/submit | ✓ | Submit quiz answers |
+| GET | /api/quizzes/history | ✓ | Past quiz sessions |
+| POST | /api/chat/message | ✓ | Send RAG chat message |
+| GET | /api/chat/{session_id}/history | ✓ | Chat history |
+| GET | /api/progress/dashboard | ✓ | Dashboard stats & streak |
+
+---
+
+## CI / CD
+
+GitHub Actions runs on every push to `main` and on pull requests:
+
+- **backend** job: Python 3.11, install deps, `flake8` lint, `black --check`
+- **frontend** job: Flutter stable, `flutter analyze`, `flutter test`
+
+---
+
+## 20-Day Build Log
+
+| Days | Focus |
+|------|-------|
+| 1 | Project scaffold + JWT auth |
+| 2 | Dev tooling, linting, CI |
+| 3–4 | Alembic migrations + user profile |
+| 5–6 | File upload & ingestion |
+| 7–8 | PDF parsing & text chunking + ChromaDB |
+| 9–10 | AI summarization (GPT-4o-mini) |
+| 11–12 | Flashcard generation with 3D flip UI |
+| 13–14 | MCQ quiz engine |
+| 15–16 | RAG chat interface |
+| 17–18 | Progress tracking dashboard |
+| 19–20 | Polish, error handling & final cleanup |
+
+---
+
+## License
+
+MIT
