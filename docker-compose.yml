@@ -1,0 +1,44 @@
+# BrainSync AI — local development stack
+# Usage: docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: brainsync-db
+    environment:
+      POSTGRES_USER: brainsync
+      POSTGRES_PASSWORD: brainsync
+      POSTGRES_DB: brainsync
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brainsync"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brainsync-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://brainsync:brainsync@db:5432/brainsync
+      SECRET_KEY: ${SECRET_KEY:-changeme}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CHROMA_DB_PATH: /app/chroma_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - chroma:/app/chroma_db
+      - uploads:/app/uploads
+
+volumes:
+  pgdata:
+  chroma:
+  uploads:
