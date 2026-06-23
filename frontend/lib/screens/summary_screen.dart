@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme.dart';
 import '../models/summary_model.dart';
 import '../services/summary_service.dart';
+import '../widgets/aurora_scaffold.dart';
 
 class SummaryScreen extends StatefulWidget {
   final int noteId;
@@ -48,7 +50,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
       setState(() { _summary = summary; _generating = false; });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Summary generated!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Summary generated!')),
         );
       }
     } catch (e) {
@@ -63,53 +65,52 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+    return AuroraScaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF13131A),
-        title: Text(widget.noteTitle, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
+        title: Text(widget.noteTitle, style: const TextStyle(fontSize: 16)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.go('/note/${widget.noteId}'),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _generating ? null : _generateSummary,
-        backgroundColor: const Color(0xFF7C3AED),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.black,
         icon: _generating
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Icon(Icons.auto_awesome, color: Colors.white),
-        label: Text(
-          _summary == null ? 'Generate Summary' : 'Regenerate',
-          style: const TextStyle(color: Colors.white),
-        ),
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+              )
+            : const Icon(Icons.auto_awesome),
+        label: Text(_summary == null ? 'Generate Summary' : 'Regenerate'),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF7C3AED)))
+          ? const Center(child: CircularProgressIndicator())
           : _summary == null
-              ? _buildEmptyState()
-              : _buildSummaryContent(),
+              ? _buildEmptyState(context)
+              : _buildSummaryContent(context),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.summarize_outlined, size: 64, color: Color(0xFF7C3AED)),
+          Icon(Icons.summarize_outlined, size: 64, color: AppTheme.primary),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No summary yet',
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(color: onSurface, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap the button below to generate\nan AI-powered summary',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+            style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 14),
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
@@ -120,31 +121,32 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  Widget _buildSummaryContent() {
+  Widget _buildSummaryContent(BuildContext context) {
     final summary = _summary!;
     return RefreshIndicator(
       onRefresh: _loadSummary,
-      color: const Color(0xFF7C3AED),
+      color: AppTheme.primary,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // TL;DR Card
           _SectionCard(
             icon: Icons.flash_on,
-            color: const Color(0xFFEAB308),
+            color: AppTheme.accent,
             title: 'TL;DR',
             child: Text(
               summary.tldr,
-              style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.6),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 15,
+                height: 1.6,
+              ),
             ),
           ),
           const SizedBox(height: 16),
-
-          // Key Points Card
           if (summary.keyPoints.isNotEmpty)
             _SectionCard(
               icon: Icons.format_list_bulleted,
-              color: const Color(0xFF22C55E),
+              color: AppTheme.secondary,
               title: 'Key Points',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,12 +156,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
             ),
           const SizedBox(height: 16),
-
-          // Concepts Card
           if (summary.concepts.isNotEmpty)
             _SectionCard(
               icon: Icons.label_outline,
-              color: const Color(0xFF7C3AED),
+              color: AppTheme.primary,
               title: 'Key Concepts',
               child: Wrap(
                 spacing: 8,
@@ -170,14 +170,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
             ),
           const SizedBox(height: 16),
-
-          // Footer
           Text(
             'Generated ${summary.formattedDate} • ${summary.modelUsed}',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 11),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+              fontSize: 11,
+            ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 80), // FAB clearance
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -199,12 +200,21 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).colorScheme.outlineVariant;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF13131A),
+        color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,16 +243,21 @@ class _KeyPointRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: Color(0xFF22C55E), fontSize: 16)),
+          Text('• ', style: TextStyle(color: AppTheme.secondary, fontSize: 16)),
           Expanded(
             child: Text(
               point,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14, height: 1.5),
+              style: TextStyle(
+                color: onSurface.withValues(alpha: 0.85),
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -260,11 +275,11 @@ class _ConceptChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
+        color: AppTheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.4)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.35)),
       ),
-      child: Text(label, style: const TextStyle(color: Color(0xFF7C3AED), fontSize: 13)),
+      child: Text(label, style: TextStyle(color: AppTheme.primary, fontSize: 13)),
     );
   }
 }

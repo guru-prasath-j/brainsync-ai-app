@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme.dart';
 import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -33,8 +34,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
-
-    // After animation, check auth state and navigate
     Future.delayed(const Duration(milliseconds: 2000), _navigate);
   }
 
@@ -54,65 +53,87 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF6C63FF),
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+      backgroundColor: AppTheme.bgDeep,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppTheme.gradient,
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.7),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.psychology_rounded,
-                    size: 56,
-                    color: Color(0xFF6C63FF),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'BrainSync AI',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your AI Study Companion',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.7),
+                      boxShadow: [
+                        // tight cyan glow
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.6),
+                          blurRadius: 40,
+                          spreadRadius: 6,
+                        ),
+                        // wide bioluminescent green bloom
+                        BoxShadow(
+                          color: AppTheme.secondary.withValues(alpha: 0.2),
+                          blurRadius: 100,
+                          spreadRadius: 28,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.psychology_rounded,
+                      size: 52,
+                      color: AppTheme.primary,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 28),
+                  const Text(
+                    'BrainSync AI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your AI Study Companion',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 15,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 56),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primary.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

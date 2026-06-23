@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:brainsync_ai/services/notes_service.dart';
+import 'package:brainsync_ai/widgets/aurora_scaffold.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -70,7 +71,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AuroraScaffold(
       appBar: AppBar(
         title: const Text('Upload Study Material'),
         leading: IconButton(
@@ -138,11 +139,7 @@ class _UploadScreenState extends State<UploadScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.cloud_upload),
               label: Text(_isUploading ? 'Uploading...' : 'Upload'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-                backgroundColor: const Color(0xFF6C63FF),
-                foregroundColor: Colors.white,
-              ),
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
             ),
           ],
         ),

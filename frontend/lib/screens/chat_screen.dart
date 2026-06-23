@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/theme.dart';
 import '../widgets/chat_bubble_widget.dart';
 
 class _Message {
@@ -152,13 +153,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A1A2E)),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => widget.noteId != null
               ? context.go('/note/${widget.noteId}')
               : context.go('/notes'),
@@ -168,8 +167,8 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Text(
               widget.title ?? 'Chat',
-              style: const TextStyle(
-                color: Color(0xFF1A1A2E),
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -177,8 +176,8 @@ class _ChatScreenState extends State<ChatScreen> {
             if (widget.noteId != null)
               Text(
                 'Note #${widget.noteId}',
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 12,
                 ),
               ),
@@ -186,14 +185,14 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Color(0xFF1A1A2E)),
+            icon: const Icon(Icons.more_vert),
             onPressed: () {},
           ),
         ],
       ),
       body: Column(
         children: [
-          const Divider(height: 1, color: Color(0xFFE5E5E5)),
+          Divider(height: 1, color: theme.dividerColor),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -230,6 +229,7 @@ class _ChatScreenState extends State<ChatScreen> {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -238,29 +238,25 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
+              color: AppTheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.auto_awesome,
-              size: 36,
-              color: Color(0xFF6C63FF),
-            ),
+            child: const Icon(Icons.auto_awesome, size: 36, color: AppTheme.primary),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Ask me anything about your notes',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
+              color: onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "I'll use your study materials to give\naccurate, contextual answers.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 14),
           ),
         ],
       ),
@@ -281,12 +277,14 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE5E5E5))),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          border: Border(top: BorderSide(color: theme.dividerColor)),
         ),
         child: Row(
           children: [
@@ -298,9 +296,10 @@ class _InputBar extends StatelessWidget {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: 'Ask a question...',
-                  hintStyle: const TextStyle(color: Colors.grey),
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: isDark
+                      ? AppTheme.glass
+                      : theme.colorScheme.surfaceContainerHighest,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,
@@ -319,25 +318,25 @@ class _InputBar extends StatelessWidget {
               width: 44,
               height: 44,
               child: isSending
-                  ? const Center(
+                  ? Center(
                       child: SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF6C63FF),
+                          color: AppTheme.primary,
                         ),
                       ),
                     )
                   : Material(
-                      color: const Color(0xFF6C63FF),
+                      color: AppTheme.primary,
                       shape: const CircleBorder(),
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: onSend,
                         child: const Icon(
                           Icons.send_rounded,
-                          color: Colors.white,
+                          color: Colors.black,
                           size: 20,
                         ),
                       ),

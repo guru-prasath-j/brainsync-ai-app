@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/api_client.dart';
+import '../core/theme.dart';
 
 class FlashcardScreen extends StatefulWidget {
   const FlashcardScreen({super.key, required this.noteId, this.noteTitle});
@@ -96,10 +97,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.emoji_events, size: 48, color: Color(0xFF6C63FF)),
+            Icon(Icons.emoji_events, size: 48, color: AppTheme.accent),
             const SizedBox(height: 16),
-            Text('$known / ${_cards.length} cards known',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+            Text(
+              '$known / ${_cards.length} cards known',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -139,10 +142,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.go('/note/${widget.noteId}'),
@@ -173,12 +173,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final progress = (_index + 1) / _cards.length;
     final known = _cards.where((c) => c['known'] == true).length;
     final unknown = _cards.where((c) => c['known'] == false).length;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Column(
       children: [
-        // Progress bar
         Container(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,8 +186,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('${_index + 1} / ${_cards.length}',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),),
+                  Text(
+                    '${_index + 1} / ${_cards.length}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
                   Row(children: [
                     const Icon(Icons.check_circle, size: 14, color: Colors.green),
                     const SizedBox(width: 4),
@@ -195,7 +200,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     const SizedBox(width: 12),
                     const Icon(Icons.cancel, size: 14, color: Colors.red),
                     const SizedBox(width: 4),
-                    Text('$unknown', style: const TextStyle(fontSize: 13, color: Colors.red),),
+                    Text('$unknown', style: const TextStyle(fontSize: 13, color: Colors.red)),
                   ]),
                 ],
               ),
@@ -205,15 +210,14 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor: Colors.grey[200],
-                  color: const Color(0xFF6C63FF),
+                  backgroundColor: primary.withValues(alpha: 0.15),
+                  color: primary,
                 ),
               ),
             ],
           ),
         ),
         const Divider(height: 1),
-        // Card
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -226,7 +230,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             ),
           ),
         ),
-        // Buttons
         if (_showAnswer)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
@@ -236,7 +239,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _rate(false),
                     icon: const Icon(Icons.close, color: Colors.red),
-                    label: const Text('Don\'t Know', style: TextStyle(color: Colors.red)),
+                    label: const Text("Don't Know", style: TextStyle(color: Colors.red)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -342,7 +345,8 @@ class _FlipCardState extends State<_FlipCard> with SingleTickerProviderStateMixi
             transform: Matrix4.identity()
               ..setEntry(3, 2, 0.001)
               ..rotateY(angle),
-            child: showFront ? _CardFace(widget.question, isQuestion: true)
+            child: showFront
+                ? _CardFace(widget.question, isQuestion: true)
                 : Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()..rotateY(pi),
@@ -362,13 +366,24 @@ class _CardFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final surface = Theme.of(context).colorScheme.surface;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isQuestion ? Colors.white : const Color(0xFF6C63FF),
+        color: isQuestion ? surface : AppTheme.primary,
         borderRadius: BorderRadius.circular(20),
+        border: isQuestion
+            ? Border.all(color: primary.withValues(alpha: 0.25))
+            : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -380,7 +395,7 @@ class _CardFace extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-              color: isQuestion ? const Color(0xFF6C63FF) : Colors.white70,
+              color: isQuestion ? primary : Colors.black54,
             ),
           ),
           const SizedBox(height: 24),
@@ -393,14 +408,16 @@ class _CardFace extends StatelessWidget {
                 fontSize: 20,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
-                color: isQuestion ? const Color(0xFF1A1A2E) : Colors.white,
+                color: isQuestion ? onSurface : Colors.black,
               ),
             ),
           ),
           const SizedBox(height: 24),
           Icon(
             isQuestion ? Icons.touch_app_outlined : Icons.lightbulb_outline,
-            color: isQuestion ? Colors.grey[300] : Colors.white38,
+            color: isQuestion
+                ? onSurface.withValues(alpha: 0.2)
+                : Colors.black38,
             size: 28,
           ),
         ],
@@ -416,6 +433,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -426,25 +444,31 @@ class _EmptyState extends StatelessWidget {
               width: 96,
               height: 96,
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
+                color: AppTheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.style_outlined, size: 48, color: Color(0xFF6C63FF)),
+              child: const Icon(Icons.style_outlined, size: 48, color: AppTheme.primary),
             ),
             const SizedBox(height: 24),
-            const Text('No Flashcards Yet',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),),
+            Text(
+              'No Flashcards Yet',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onSurface),
+            ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Generate AI flashcards from your note to start studying',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 14, height: 1.5),
+              style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: isGenerating ? null : onGenerate,
               icon: isGenerating
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
                   : const Icon(Icons.auto_awesome),
               label: Text(isGenerating ? 'Generating...' : 'Generate Flashcards'),
               style: FilledButton.styleFrom(

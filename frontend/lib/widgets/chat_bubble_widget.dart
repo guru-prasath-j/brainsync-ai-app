@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../core/theme.dart';
 
-/// A styled chat bubble for user and assistant messages.
 class ChatBubbleWidget extends StatelessWidget {
   const ChatBubbleWidget({
     super.key,
@@ -16,6 +16,15 @@ class ChatBubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final userBubbleColor = AppTheme.primary;
+    final aiBubbleColor = isDark
+        ? AppTheme.glass
+        : theme.colorScheme.surfaceContainerHighest;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       child: Row(
@@ -36,9 +45,7 @@ class ChatBubbleWidget extends StatelessWidget {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isUser
-                        ? const Color(0xFF6C63FF)
-                        : const Color(0xFFF0F0F7),
+                    color: isUser ? userBubbleColor : aiBubbleColor,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -57,7 +64,7 @@ class ChatBubbleWidget extends StatelessWidget {
                       ? Text(
                           message,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.black,
                             fontSize: 15,
                             height: 1.4,
                           ),
@@ -65,27 +72,27 @@ class ChatBubbleWidget extends StatelessWidget {
                       : MarkdownBody(
                           data: message,
                           styleSheet: MarkdownStyleSheet(
-                            p: const TextStyle(
-                              color: Color(0xFF1A1A2E),
+                            p: TextStyle(
+                              color: onSurface,
                               fontSize: 15,
                               height: 1.5,
                             ),
-                            strong: const TextStyle(
-                              color: Color(0xFF1A1A2E),
+                            strong: TextStyle(
+                              color: onSurface,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
-                            listBullet: const TextStyle(
-                              color: Color(0xFF6C63FF),
+                            listBullet: TextStyle(
+                              color: AppTheme.primary,
                               fontSize: 15,
                             ),
                             code: TextStyle(
-                              backgroundColor: Colors.grey.shade200,
+                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
                               fontSize: 13,
                               fontFamily: 'monospace',
                             ),
-                            blockquote: const TextStyle(
-                              color: Colors.grey,
+                            blockquote: TextStyle(
+                              color: onSurface.withValues(alpha: 0.6),
                               fontSize: 14,
                             ),
                           ),
@@ -96,9 +103,9 @@ class ChatBubbleWidget extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 3, left: 4, right: 4),
                     child: Text(
                       timestamp!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey,
+                        color: onSurface.withValues(alpha: 0.4),
                       ),
                     ),
                   ),
@@ -121,18 +128,16 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 16,
-      backgroundColor:
-          isUser ? const Color(0xFF6C63FF) : const Color(0xFF10B981),
+      backgroundColor: isUser ? AppTheme.primary : AppTheme.secondary,
       child: Icon(
         isUser ? Icons.person : Icons.auto_awesome,
         size: 16,
-        color: Colors.white,
+        color: Colors.black,
       ),
     );
   }
 }
 
-/// A pulsing three-dot typing indicator shown while AI is generating.
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -161,6 +166,11 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bubbleColor = isDark
+        ? AppTheme.glass
+        : Theme.of(context).colorScheme.surfaceContainerHighest;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       child: Row(
@@ -170,7 +180,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F0F7),
+              color: bubbleColor,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
@@ -187,7 +197,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
                         scale: scale,
                         child: const CircleAvatar(
                           radius: 5,
-                          backgroundColor: Color(0xFF6C63FF),
+                          backgroundColor: AppTheme.primary,
                         ),
                       ),
                     );

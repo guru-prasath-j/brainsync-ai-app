@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme.dart';
 
 class ActivityChartWidget extends StatelessWidget {
   final List<Map<String, dynamic>> dailyActivity;
@@ -47,7 +48,7 @@ class ActivityChartWidget extends StatelessWidget {
                             Text(
                               '$count',
                               style: const TextStyle(
-                                  fontSize: 10, color: Colors.deepPurple),
+                                  fontSize: 10, color: AppTheme.primary),
                             ),
                           const SizedBox(height: 2),
                           AnimatedContainer(
@@ -55,7 +56,7 @@ class ActivityChartWidget extends StatelessWidget {
                             height: 70 * heightRatio,
                             decoration: BoxDecoration(
                               color: count > 0
-                                  ? Colors.deepPurple
+                                  ? AppTheme.primary
                                   : Colors.grey[300],
                               borderRadius: BorderRadius.circular(4),
                             ),

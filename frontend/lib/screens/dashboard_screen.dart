@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme.dart';
 import '../services/api_service.dart';
+import '../widgets/aurora_scaffold.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/stat_card_widget.dart';
 import '../widgets/activity_chart_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -23,34 +26,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadStats() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final data = await ApiService.get('/api/progress/dashboard');
-      setState(() {
-        _stats = data;
-        _loading = false;
-      });
+      setState(() { _stats = data; _loading = false; });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
+    return AuroraScaffold(
       appBar: AppBar(
-        title: const Text('Dashboard',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple,
-        elevation: 0,
+        title: const Text('Dashboard'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.go('/home'),
@@ -66,23 +55,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(_error!,
-                          style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                          onPressed: _loadStats,
-                          child: const Text('Retry')),
-                    ],
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Color(0xFFF87171)),
+                        const SizedBox(height: 16),
+                        Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)), textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton(onPressed: _loadStats, child: const Text('Retry')),
+                      ],
+                    ),
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: _loadStats,
+                  color: AppTheme.primary,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
@@ -107,32 +96,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStreakBanner() {
     final streak = _stats!['streak_days'] as int? ?? 0;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.deepPurple, Colors.purpleAccent],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return GlassCard(
+      color: AppTheme.primary.withValues(alpha: 0.12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Row(
         children: [
           const Text('🔥', style: TextStyle(fontSize: 32)),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 '$streak day${streak == 1 ? '' : 's'} streak',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
+                style: TextStyle(color: onSurface, fontSize: 20, fontWeight: FontWeight.w700),
               ),
-              const Text(
+              Text(
                 'Keep it up! Upload notes daily.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: onSurface.withValues(alpha: 0.6), fontSize: 13),
               ),
             ],
           ),
@@ -148,28 +129,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: 'Notes',
         value: s['total_notes'] as int? ?? 0,
         icon: Icons.description_outlined,
-        color: Colors.blue,
+        color: Theme.of(context).colorScheme.onSurface,
         subtitle: '${s['processed_notes'] ?? 0} processed',
       ),
       StatCard(
         label: 'Flashcards',
         value: s['total_flashcards'] as int? ?? 0,
         icon: Icons.style_outlined,
-        color: Colors.orange,
+        color: AppTheme.accent,
       ),
       StatCard(
         label: 'Quizzes',
         value: s['total_quizzes'] as int? ?? 0,
         icon: Icons.quiz_outlined,
-        color: Colors.green,
+        color: AppTheme.secondary,
         subtitle: 'Avg score: ${s['avg_quiz_score'] ?? 0}%',
       ),
       StatCard(
         label: 'AI Chats',
         value: s['total_messages'] as int? ?? 0,
         icon: Icons.chat_bubble_outline,
-        color: Colors.deepPurple,
+        color: AppTheme.primary,
       ),
+
     ];
 
     return GridView.count(

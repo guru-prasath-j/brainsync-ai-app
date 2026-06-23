@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:brainsync_ai/core/theme.dart';
 import 'package:brainsync_ai/models/note_model.dart';
 import 'package:brainsync_ai/services/notes_service.dart';
+import 'package:brainsync_ai/widgets/aurora_scaffold.dart';
+import 'package:brainsync_ai/widgets/glass_card.dart';
 
 class NotesListScreen extends StatefulWidget {
   const NotesListScreen({super.key});
@@ -31,9 +34,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
     }
   }
 
-  void _refresh() {
-    setState(() { _notesFuture = _loadNotes(); });
-  }
+  void _refresh() => setState(() { _notesFuture = _loadNotes(); });
 
   Future<void> _deleteNote(NoteModel note) async {
     final confirmed = await showDialog<bool>(
@@ -45,7 +46,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFF87171))),
           ),
         ],
       ),
@@ -55,18 +56,15 @@ class _NotesListScreenState extends State<NotesListScreen> {
         await _notesService.deleteNote(note.id);
         _refresh();
       } catch (e) {
-        final is404 = e.toString().contains('404');
-        if (mounted) {
-          if (is404) {
-            // Note already gone — refresh list silently
-            _refresh();
-          } else if (e.toString().contains('401')) {
-            context.go('/login');
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
-            );
-          }
+        if (!mounted) return;
+        if (e.toString().contains('404')) {
+          _refresh();
+        } else if (e.toString().contains('401')) {
+          context.go('/login');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+          );
         }
       }
     }
@@ -74,15 +72,15 @@ class _NotesListScreenState extends State<NotesListScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'processing': return Colors.orange;
-      case 'processed': return Colors.green;
-      default: return Colors.grey;
+      case 'processing': return const Color(0xFFFB923C);
+      case 'processed':  return AppTheme.secondary;
+      default:           return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AuroraScaffold(
       appBar: AppBar(
         title: const Text('My Study Materials'),
         leading: IconButton(
@@ -92,8 +90,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async { await context.push('/upload'); _refresh(); },
-        backgroundColor: const Color(0xFF6C63FF),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add),
       ),
       body: FutureBuilder<List<NoteModel>>(
         future: _notesFuture,
@@ -103,71 +100,111 @@ class _NotesListScreenState extends State<NotesListScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 8),
-                  Text('Failed to load notes', style: Theme.of(context).textTheme.titleMedium),
-                  TextButton(onPressed: _refresh, child: const Text('Retry')),
-                ],
+              child: GlassCard(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Color(0xFFF87171)),
+                    const SizedBox(height: 12),
+                    Text('Failed to load notes', style: Theme.of(context).textTheme.titleMedium),
+                    TextButton(onPressed: _refresh, child: const Text('Retry')),
+                  ],
+                ),
               ),
             );
           }
           final notes = snapshot.data ?? [];
           if (notes.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.book_outlined, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('No study materials yet'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => context.go('/upload'),
-                    child: const Text('Upload Your First File'),
-                  ),
-                ],
+              child: GlassCard(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.book_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
+                    const SizedBox(height: 16),
+                    Text('No study materials yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 16)),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => context.go('/upload'),
+                      child: const Text('Upload Your First File'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
           return RefreshIndicator(
             onRefresh: () async => _refresh(),
+            color: AppTheme.primary,
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: notes.length,
               itemBuilder: (context, index) {
                 final note = notes[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFF6C63FF),
-                      child: Icon(Icons.description, color: Colors.white),
-                    ),
-                    title: Text(note.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${note.fileSizeFormatted} • ${note.createdAt.toLocal().toString().substring(0, 10)}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: GlassCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    onTap: () => context.go('/note/${note.id}'),
+                    child: Row(
                       children: [
-                        Chip(
-                          label: Text(
-                            note.status,
-                            style: const TextStyle(fontSize: 11, color: Colors.white),
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                           ),
-                          backgroundColor: _statusColor(note.status),
-                          padding: EdgeInsets.zero,
+                          child: const Icon(Icons.description_outlined, color: AppTheme.primary, size: 20),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                note.title,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${note.fileSizeFormatted} • ${note.createdAt.toLocal().toString().substring(0, 10)}',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _statusColor(note.status).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: _statusColor(note.status).withValues(alpha: 0.4)),
+                          ),
+                          child: Text(
+                            note.status,
+                            style: TextStyle(color: _statusColor(note.status), fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          tooltip: 'Delete',
+                          icon: const Icon(Icons.delete_outline, color: Color(0xFFF87171), size: 20),
                           onPressed: () => _deleteNote(note),
                         ),
                       ],
                     ),
-
-                    onTap: () => context.go('/note/${note.id}'),
                   ),
                 );
               },

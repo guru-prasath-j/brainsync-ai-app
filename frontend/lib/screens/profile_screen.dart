@@ -156,10 +156,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.go('/home'),
         ),
       ),
@@ -174,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 16),
                       CircleAvatar(
                         radius: 48,
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         child: Text(
                           _user!.initials,
                           style: const TextStyle(
@@ -205,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ElevatedButton(
                               onPressed: _saveName,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6C63FF),
+                                backgroundColor: Theme.of(context).colorScheme.primary,
                               ),
                               child: const Text('Save', style: TextStyle(color: Colors.white)),
                             ),

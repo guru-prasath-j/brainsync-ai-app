@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme_provider.dart';
 import '../services/auth_service.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = false;
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
 
   Future<void> _logout() async {
@@ -42,13 +43,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme     = Theme.of(context);
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark    = themeMode == ThemeMode.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        centerTitle: true,
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => context.go('/home'),
@@ -56,8 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          // ── Account ─────────────────────────────────────────
-          _SectionHeader(title: 'Account'),
+          // ── Account ──────────────────────────────────────────
+          const _SectionHeader(title: 'Account'),
           ListTile(
             leading: const Icon(Icons.person_outline_rounded),
             title: const Text('Edit Profile'),
@@ -71,17 +72,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => context.go('/profile'),
           ),
 
-          // ── Appearance ───────────────────────────────────────
-          _SectionHeader(title: 'Appearance'),
+          // ── Appearance ────────────────────────────────────────
+          const _SectionHeader(title: 'Appearance'),
           SwitchListTile(
-            secondary: const Icon(Icons.dark_mode_outlined),
+            secondary: Icon(isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded),
             title: const Text('Dark Mode'),
-            value: _darkMode,
-            onChanged: (v) => setState(() => _darkMode = v),
+            subtitle: Text(isDark ? 'Deep Ocean Dark' : 'Light Ocean'),
+            value: isDark,
+            onChanged: (v) {
+              ref.read(themeModeProvider.notifier).state =
+                  v ? ThemeMode.dark : ThemeMode.light;
+            },
           ),
 
-          // ── Notifications ────────────────────────────────────
-          _SectionHeader(title: 'Notifications'),
+          // ── Notifications ──────────────────────────────────────
+          const _SectionHeader(title: 'Notifications'),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: const Text('Study Reminders'),
@@ -89,8 +94,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (v) => setState(() => _notificationsEnabled = v),
           ),
 
-          // ── About ────────────────────────────────────────────
-          _SectionHeader(title: 'About'),
+          // ── About ──────────────────────────────────────────────
+          const _SectionHeader(title: 'About'),
           ListTile(
             leading: const Icon(Icons.info_outline_rounded),
             title: const Text('App Version'),
@@ -110,13 +115,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // ── Danger zone ──────────────────────────────────────
+          // ── Danger zone ────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: OutlinedButton.icon(
               onPressed: _logout,
-              icon: Icon(Icons.logout_rounded,
-                  color: theme.colorScheme.error),
+              icon: Icon(Icons.logout_rounded, color: theme.colorScheme.error),
               label: Text(
                 'Log Out',
                 style: TextStyle(color: theme.colorScheme.error),
