@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,7 +41,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  static const _baseUrl = 'http://localhost:8000/api';
+  static const String _baseUrl = 'http://localhost:8001/api';
 
   final _messages = <_Message>[];
   final _controller = TextEditingController();
@@ -64,7 +65,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    return prefs.getString('auth_token');
   }
 
   Future<void> _loadMessages() async {
@@ -158,7 +159,9 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A1A2E)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => widget.noteId != null
+              ? context.go('/note/${widget.noteId}')
+              : context.go('/notes'),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +238,7 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.1),
+              color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -255,7 +258,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'I'll use your study materials to give\naccurate, contextual answers.',
+            "I'll use your study materials to give\naccurate, contextual answers.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),

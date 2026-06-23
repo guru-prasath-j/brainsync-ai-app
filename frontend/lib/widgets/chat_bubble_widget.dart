@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// A styled chat bubble for user and assistant messages.
 class ChatBubbleWidget extends StatelessWidget {
@@ -46,20 +47,49 @@ class ChatBubbleWidget extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : const Color(0xFF1A1A2E),
-                      fontSize: 15,
-                      height: 1.4,
-                    ),
-                  ),
+                  child: isUser
+                      ? Text(
+                          message,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        )
+                      : MarkdownBody(
+                          data: message,
+                          styleSheet: MarkdownStyleSheet(
+                            p: const TextStyle(
+                              color: Color(0xFF1A1A2E),
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                            strong: const TextStyle(
+                              color: Color(0xFF1A1A2E),
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            listBullet: const TextStyle(
+                              color: Color(0xFF6C63FF),
+                              fontSize: 15,
+                            ),
+                            code: TextStyle(
+                              backgroundColor: Colors.grey.shade200,
+                              fontSize: 13,
+                              fontFamily: 'monospace',
+                            ),
+                            blockquote: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
                 ),
                 if (timestamp != null)
                   Padding(

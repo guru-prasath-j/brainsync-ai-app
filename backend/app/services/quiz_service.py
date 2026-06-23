@@ -1,9 +1,13 @@
+import os
 from typing import List, Dict, Any
 import json
+import httpx
 from openai import AsyncOpenAI
-from app.core.config import settings
 
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+client = AsyncOpenAI(
+    api_key=os.getenv('OPENAI_API_KEY'),
+    http_client=httpx.AsyncClient(verify=False),
+)
 
 
 class QuizService:

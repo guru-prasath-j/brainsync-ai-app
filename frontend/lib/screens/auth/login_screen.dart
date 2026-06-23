@@ -32,10 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authService.login(_emailController.text.trim(), _passwordController.text);
       if (mounted) context.go('/home');
     } on DioException catch (e) {
-      final msg = e.response?.data['detail'] ?? 'Login failed. Please try again.';
+      final msg = e.response?.data?['detail']?.toString()
+          ?? e.message
+          ?? e.toString();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red, duration: const Duration(seconds: 8)),
         );
       }
     } finally {

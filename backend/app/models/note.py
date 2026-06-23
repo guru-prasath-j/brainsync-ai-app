@@ -19,6 +19,7 @@ class Note(Base):
 
     # Relationships
     owner = relationship("User", back_populates="notes")
+    summary = relationship("Summary", back_populates="note", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Note id={self.id} title={self.title!r} status={self.status!r}>"

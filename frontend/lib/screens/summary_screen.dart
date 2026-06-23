@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/summary_model.dart';
 import '../services/summary_service.dart';
 
@@ -69,6 +70,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
         title: Text(widget.noteTitle, style: const TextStyle(color: Colors.white, fontSize: 16)),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => context.go('/note/${widget.noteId}'),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _generating ? null : _generateSummary,
@@ -104,7 +109,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           Text(
             'Tap the button below to generate\nan AI-powered summary',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
@@ -169,7 +174,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           // Footer
           Text(
             'Generated ${summary.formattedDate} • ${summary.modelUsed}',
-            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 11),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 80), // FAB clearance
@@ -199,7 +204,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF13131A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +242,7 @@ class _KeyPointRow extends StatelessWidget {
           Expanded(
             child: Text(
               point,
-              style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14, height: 1.5),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14, height: 1.5),
             ),
           ),
         ],
@@ -255,9 +260,9 @@ class _ConceptChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF7C3AED).withOpacity(0.15),
+        color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF7C3AED).withOpacity(0.4)),
+        border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.4)),
       ),
       child: Text(label, style: const TextStyle(color: Color(0xFF7C3AED), fontSize: 13)),
     );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import '../core/api_client.dart';
 
 class QuizScreen extends StatefulWidget {
   final int sessionId;
-  const QuizScreen({Key? key, required this.sessionId}) : super(key: key);
+  const QuizScreen({super.key, required this.sessionId});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -45,35 +45,41 @@ class _QuizScreenState extends State<QuizScreen> {
     final question = _session!['questions'][_currentIndex];
     setState(() => _submitting = true);
     try {
-      final resp = await ApiClient.instance.post('/api/quizzes/submit-answer', data: {
-        'session_id': widget.sessionId,
-        'question_id': question['id'],
-        'selected_index': _selectedOption,
-      });
-      setState(() {
-        _answerResult = resp.data;
-        _submitting = false;
-      });
-    } catch (e) {
-      setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit answer')),
+      final resp = await ApiClient.instance.post(
+        '/api/quizzes/submit-answer',
+        data: {
+          'session_id': widget.sessionId,
+          'question_id': question['id'],
+          'selected_index': _selectedOption,
+        },
       );
+      if (mounted) {
+        setState(() {
+          _answerResult = resp.data;
+          _submitting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit answer')),
+        );
+      }
     }
   }
 
   void _nextQuestion() {
     final questions = _session!['questions'] as List;
-    if (_answerResult?['session_completed'] == true) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuizResultScreen(
-            sessionId: widget.sessionId,
-            score: _answerResult!['session_score'],
-            total: questions.length,
-          ),
-        ),
+    final isCompleted = _answerResult?['session_completed'] == true;
+    final isLastQuestion = _currentIndex >= questions.length - 1;
+
+    if (isCompleted || isLastQuestion) {
+      final score = _answerResult?['session_score'] ?? 0;
+      context.go(
+        '/quiz/${widget.sessionId}/result'
+        '?score=$score'
+        '&total=${questions.length}',
       );
       return;
     }
@@ -96,12 +102,17 @@ class _QuizScreenState extends State<QuizScreen> {
     final question = questions[_currentIndex];
     final options = question['options'] as List;
     final progress = (_currentIndex + 1) / questions.length;
+    final correctIndex = _answerResult?['correct_index'] as int?;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Quiz (${_currentIndex + 1}/${questions.length})'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.go('/notes'),
+        ),
       ),
       body: Column(
         children: [
@@ -132,7 +143,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ...List.generate(options.length, (i) {
                     Color cardColor = Colors.white;
                     if (_answerResult != null) {
-                      if (i == question['correct_index']) {
+                      if (i == correctIndex) {
                         cardColor = Colors.green.shade100;
                       } else if (i == _selectedOption) {
                         cardColor = Colors.red.shade100;
@@ -141,7 +152,9 @@ class _QuizScreenState extends State<QuizScreen> {
                       cardColor = Colors.deepPurple.shade100;
                     }
                     return GestureDetector(
-                      onTap: _answerResult != null ? null : () => setState(() => _selectedOption = i),
+                      onTap: _answerResult != null
+                          ? null
+                          : () => setState(() => _selectedOption = i),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(14),
@@ -160,12 +173,21 @@ class _QuizScreenState extends State<QuizScreen> {
                             CircleAvatar(
                               radius: 14,
                               backgroundColor: Colors.deepPurple.shade100,
-                              child: Text(${'ABCD'[i]},
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              child: Text(
+                                'ABCD'[i].toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 12),
-                            Expanded(child: Text(options[i].toString(),
-                              style: const TextStyle(fontSize: 15))),
+                            Expanded(
+                              child: Text(
+                                options[i].toString(),
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -176,7 +198,9 @@ class _QuizScreenState extends State<QuizScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: _answerResult!['is_correct'] ? Colors.green.shade50 : Colors.orange.shade50,
+                        color: _answerResult!['is_correct']
+                            ? Colors.green.shade50
+                            : Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: _answerResult!['is_correct'] ? Colors.green : Colors.orange,
@@ -189,11 +213,16 @@ class _QuizScreenState extends State<QuizScreen> {
                             _answerResult!['is_correct'] ? '✅ Correct!' : '❌ Incorrect',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _answerResult!['is_correct'] ? Colors.green.shade800 : Colors.red.shade800,
+                              color: _answerResult!['is_correct']
+                                  ? Colors.green.shade800
+                                  : Colors.red.shade800,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(_answerResult!['explanation'] ?? '', style: const TextStyle(fontSize: 14)),
+                          Text(
+                            _answerResult!['explanation'] ?? '',
+                            style: const TextStyle(fontSize: 14),
+                          ),
                         ],
                       ),
                     ),
@@ -216,12 +245,23 @@ class _QuizScreenState extends State<QuizScreen> {
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: _submitting
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(_answerResult != null ? 'Next Question' : 'Submit Answer',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        _answerResult != null ? 'Next Question' : 'Submit Answer',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
               ),
             ),
           ),
@@ -237,11 +277,11 @@ class QuizResultScreen extends StatelessWidget {
   final int total;
 
   const QuizResultScreen({
-    Key? key,
+    super.key,
     required this.sessionId,
     required this.score,
     required this.total,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -278,9 +318,16 @@ class QuizResultScreen extends StatelessWidget {
                   children: [
                     Text(
                       '$score / $total',
-                      style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
                     ),
-                    Text('$percent% Score', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+                    Text(
+                      '$percent% Score',
+                      style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                    ),
                   ],
                 ),
               ),
@@ -288,14 +335,16 @@ class QuizResultScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                  onPressed: () => context.go('/notes'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: const Text('Back to Home', style: TextStyle(fontSize: 16)),
+                  child: const Text('Back to Notes', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

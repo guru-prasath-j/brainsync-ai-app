@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.api.deps import get_current_user
 from app.models.note import Note
 from app.models.user import User
 from app.schemas.note import NoteResponse
@@ -33,8 +33,8 @@ async def upload_note(
     current_user: User = Depends(get_current_user),
 ):
     """Upload a PDF or text file and queue it for processing."""
-    allowed_types = {"application/pdf", "text/plain"}
-    if file.content_type not in allowed_types:
+    allowed_types = {"application/pdf", "text/plain", "text/markdown", "application/octet-stream"}
+    if file.content_type not in allowed_types and not (file.filename or '').endswith(('.pdf', '.txt', '.md')):
         raise HTTPException(status_code=400, detail="Only PDF and plain text files are supported")
 
     content = await file.read()
@@ -89,3 +89,49 @@ def get_note(
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return note
+
+
+@router.delete("/{note_id}", status_code=204)
+def delete_note(
+    note_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a note, its file, and all related sessions."""
+    note = (
+        db.query(Note)
+        .filter(Note.id == note_id, Note.user_id == current_user.id)
+        .first()
+    )
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    # Delete related quiz sessions (and their questions via cascade)
+    from app.models.quiz import QuizSession, QuizQuestion
+    quiz_sessions = db.query(QuizSession).filter(QuizSession.note_id == note_id).all()
+    for qs in quiz_sessions:
+        db.query(QuizQuestion).filter(QuizQuestion.session_id == qs.id).delete()
+        db.delete(qs)
+
+    # Delete related chat sessions (and their messages via cascade)
+    from app.models.chat import ChatSession, ChatMessage
+    chat_sessions = db.query(ChatSession).filter(ChatSession.note_id == note_id).all()
+    for cs in chat_sessions:
+        db.query(ChatMessage).filter(ChatMessage.session_id == cs.id).delete()
+        db.delete(cs)
+
+    # Delete flashcards
+    from app.models.flashcard import Flashcard
+    db.query(Flashcard).filter(Flashcard.note_id == note_id).delete()
+
+    db.flush()
+
+    # Remove file from disk
+    if note.file_path:
+        try:
+            os.remove(note.file_path)
+        except OSError:
+            pass
+
+    db.delete(note)
+    db.commit()

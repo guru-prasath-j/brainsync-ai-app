@@ -1,10 +1,14 @@
 """
 Summaries API — generate and retrieve AI summaries for notes.
 """
+import logging
+import traceback
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.auth import get_current_user
+logger = logging.getLogger(__name__)
+
+from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.note import Note
 from app.models.summary import Summary
@@ -29,16 +33,29 @@ async def _do_generate(note_id: int, user_id: int, db: Session) -> Summary:
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
 
-    # Read note text from file if available, else use title as placeholder
+    # Extract text from the uploaded file
     text = note.title  # fallback
     try:
         if note.file_path:
-            with open(note.file_path, "r", errors="replace") as f:
-                text = f.read()
-    except (OSError, AttributeError):
-        pass
+            fname = (note.file_name or "").lower()
+            if fname.endswith(".pdf"):
+                import pdfplumber
+                with pdfplumber.open(note.file_path) as pdf:
+                    text = "\n".join(
+                        page.extract_text() or "" for page in pdf.pages
+                    ).strip() or note.title
+            else:
+                with open(note.file_path, "r", encoding="utf-8", errors="replace") as f:
+                    text = f.read()
+    except Exception as exc:
+        logger.warning("Could not read file %s, falling back to title: %s", note.file_path, exc)
 
-    result = await ai_service.summarize(text)
+    try:
+        result = await ai_service.summarize(text)
+    except Exception as exc:
+        logger.error("AI summarize failed: %s\n%s", exc, traceback.format_exc())
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=f"AI service error: {exc}") from exc
 
     # Upsert summary
     summary = db.query(Summary).filter(Summary.note_id == note_id).first()

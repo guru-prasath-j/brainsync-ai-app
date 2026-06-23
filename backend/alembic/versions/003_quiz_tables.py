@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = '003_quiz_tables'
-down_revision = '001_initial_schema'
+down_revision = '001'
 branch_labels = None
 depends_on = None
 

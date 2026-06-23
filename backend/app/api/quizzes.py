@@ -4,7 +4,7 @@ from typing import List
 from pydantic import BaseModel
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.note import Note
 from app.models.quiz import QuizSession, QuizQuestion
@@ -77,8 +77,13 @@ async def generate_quiz(
 
     # Read file content for quiz generation
     try:
-        with open(note.file_path, 'r', errors='ignore') as f:
-            text = f.read()
+        if (note.file_name or '').lower().endswith('.pdf'):
+            import pdfplumber
+            with pdfplumber.open(note.file_path) as pdf:
+                text = '\n'.join(page.extract_text() or '' for page in pdf.pages).strip()
+        else:
+            with open(note.file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                text = f.read()
     except Exception:
         raise HTTPException(status_code=500, detail='Could not read note file')
 

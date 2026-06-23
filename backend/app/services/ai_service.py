@@ -5,10 +5,17 @@ import json
 import os
 from typing import Optional
 
+import httpx
 import openai
 from openai import AsyncOpenAI
 
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def _get_client() -> AsyncOpenAI:
+    key = os.getenv("OPENAI_API_KEY")
+    if not key:
+        raise RuntimeError("OPENAI_API_KEY is not set. AI features are unavailable.")
+    # verify=False bypasses AVG antivirus SSL interception in local dev
+    http_client = httpx.AsyncClient(verify=False)
+    return AsyncOpenAI(api_key=key, http_client=http_client)
 
 SUMMARIZE_SYSTEM_PROMPT = """You are an expert study assistant that helps students understand complex material.
 When given text content, produce a structured summary with:
@@ -47,7 +54,7 @@ class AIService:
             text = text[:max_chunk_chars] + "\n\n[Content truncated for summarization]"
 
         try:
-            response = await client.chat.completions.create(
+            response = await _get_client().chat.completions.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
                 temperature=0.3,
@@ -89,7 +96,7 @@ class AIService:
     async def generate_title(self, text: str) -> str:
         """Generate a concise title for a piece of text."""
         truncated = text[:2000]
-        response = await client.chat.completions.create(
+        response = await _get_client().chat.completions.create(
             model=self.model,
             max_tokens=30,
             temperature=0.5,
@@ -106,4 +113,49 @@ class AIService:
         return response.choices[0].message.content.strip().strip('"')
 
 
+FLASHCARD_SYSTEM_PROMPT = """You are a study assistant that creates flashcards from study material.
+Generate 8-12 flashcard pairs covering the most important concepts, definitions, and facts.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "flashcards": [
+    {"question": "...", "answer": "..."},
+    ...
+  ]
+}
+
+Rules:
+- Questions should be concise and specific
+- Answers should be clear and complete but brief (1-3 sentences)
+- Cover key terms, definitions, dates, formulas, and concepts
+- Vary the question style (What is...? How does...? Why...? Define...)"""
+
+
 ai_service = AIService()
+
+
+async def generate_flashcards(text: str, max_chunk_chars: int = 12000) -> list[dict]:
+    """Generate Q&A flashcard pairs from text using AI."""
+    if len(text) > max_chunk_chars:
+        text = text[:max_chunk_chars] + "\n\n[Content truncated]"
+
+    client = _get_client()
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        max_tokens=2048,
+        temperature=0.4,
+        messages=[
+            {"role": "system", "content": FLASHCARD_SYSTEM_PROMPT},
+            {"role": "user", "content": f"Create flashcards from this study material:\n\n{text}"},
+        ],
+    )
+
+    raw = response.choices[0].message.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    result = json.loads(raw)
+    return result.get("flashcards", [])

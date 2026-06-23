@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:brainsync/models/note_model.dart';
-import 'package:brainsync/services/notes_service.dart';
+import 'package:go_router/go_router.dart';
+import 'package:brainsync_ai/models/note_model.dart';
+import 'package:brainsync_ai/services/notes_service.dart';
 
 class NotesListScreen extends StatefulWidget {
   const NotesListScreen({super.key});
@@ -16,11 +17,59 @@ class _NotesListScreenState extends State<NotesListScreen> {
   @override
   void initState() {
     super.initState();
-    _notesFuture = _notesService.getNotes();
+    _notesFuture = _loadNotes();
+  }
+
+  Future<List<NoteModel>> _loadNotes() async {
+    try {
+      return await _notesService.getNotes();
+    } catch (e) {
+      if (e.toString().contains('401') && mounted) {
+        context.go('/login');
+      }
+      rethrow;
+    }
   }
 
   void _refresh() {
-    setState(() => _notesFuture = _notesService.getNotes());
+    setState(() { _notesFuture = _loadNotes(); });
+  }
+
+  Future<void> _deleteNote(NoteModel note) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Note'),
+        content: Text('Delete "${note.title}"? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      try {
+        await _notesService.deleteNote(note.id);
+        _refresh();
+      } catch (e) {
+        final is404 = e.toString().contains('404');
+        if (mounted) {
+          if (is404) {
+            // Note already gone — refresh list silently
+            _refresh();
+          } else if (e.toString().contains('401')) {
+            context.go('/login');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+            );
+          }
+        }
+      }
+    }
   }
 
   Color _statusColor(String status) {
@@ -34,9 +83,15 @@ class _NotesListScreenState extends State<NotesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Study Materials')),
+      appBar: AppBar(
+        title: const Text('My Study Materials'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => context.go('/home'),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/upload').then((_) => _refresh()),
+        onPressed: () async { await context.push('/upload'); _refresh(); },
         backgroundColor: const Color(0xFF6C63FF),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -70,7 +125,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                   const Text('No study materials yet'),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/upload'),
+                    onPressed: () => context.go('/upload'),
                     child: const Text('Upload Your First File'),
                   ),
                 ],
@@ -92,15 +147,27 @@ class _NotesListScreenState extends State<NotesListScreen> {
                       child: Icon(Icons.description, color: Colors.white),
                     ),
                     title: Text(note.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(note.fileSizeFormatted + ' • ' +
-                        note.createdAt.toLocal().toString().substring(0, 10)),
-                    trailing: Chip(
-                      label: Text(note.status,
-                          style: const TextStyle(fontSize: 11, color: Colors.white)),
-                      backgroundColor: _statusColor(note.status),
-                      padding: EdgeInsets.zero,
+                    subtitle: Text('${note.fileSizeFormatted} • ${note.createdAt.toLocal().toString().substring(0, 10)}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Chip(
+                          label: Text(
+                            note.status,
+                            style: const TextStyle(fontSize: 11, color: Colors.white),
+                          ),
+                          backgroundColor: _statusColor(note.status),
+                          padding: EdgeInsets.zero,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          tooltip: 'Delete',
+                          onPressed: () => _deleteNote(note),
+                        ),
+                      ],
                     ),
-                    onTap: () => Navigator.pushNamed(context, '/note/' + note.id.toString()),
+
+                    onTap: () => context.go('/note/${note.id}'),
                   ),
                 );
               },

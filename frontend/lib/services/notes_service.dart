@@ -1,17 +1,17 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:brainsync/core/api_client.dart';
-import 'package:brainsync/models/note_model.dart';
+import 'package:brainsync_ai/core/api_client.dart';
+import 'package:brainsync_ai/models/note_model.dart';
 
 class NotesService {
   final Dio _dio = ApiClient.instance;
 
   Future<NoteModel> uploadNote({
-    required String filePath,
+    required List<int> bytes,
+    required String filename,
     required String title,
     void Function(int sent, int total)? onProgress,
   }) async {
-    final file = await MultipartFile.fromFile(filePath);
+    final file = MultipartFile.fromBytes(bytes, filename: filename);
     final formData = FormData.fromMap({
       'title': title,
       'file': file,

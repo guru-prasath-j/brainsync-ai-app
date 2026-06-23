@@ -3,12 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
-  static const String _baseUrl = 'http://localhost:8000/api';
+  static const String _baseUrl = 'http://localhost:8001/api';
 
   final Dio _dio = Dio(BaseOptions(
     baseUrl: _baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
   ));
 
   Future<String?> login(String email, String password) async {
@@ -21,18 +25,16 @@ class AuthService {
     return token;
   }
 
-  Future<String?> register(String email, String fullName, String password) async {
-    final response = await _dio.post('/auth/register', data: {
+  Future<void> register(String email, String fullName, String password) async {
+    await _dio.post('/auth/register', data: {
       'email': email,
       'full_name': fullName,
       'password': password,
     });
-    final token = response.data['access_token'] as String;
-    await _saveToken(token);
-    return token;
+    // Don't save token — user must login manually after registration
   }
 
-  Future<void> logout() async {
+  static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
   }
@@ -42,8 +44,9 @@ class AuthService {
     return prefs.getString(_tokenKey);
   }
 
-  Future<bool> isLoggedIn() async {
-    final token = await getToken();
+  static Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
     return token != null && token.isNotEmpty;
   }
 

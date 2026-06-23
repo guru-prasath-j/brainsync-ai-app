@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -34,8 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      await AuthService().logout();
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+      await AuthService.logout();
+      if (mounted) context.go('/login');
     }
   }
 
@@ -48,6 +49,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         centerTitle: true,
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => context.go('/home'),
+        ),
       ),
       body: ListView(
         children: [
@@ -57,13 +62,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.person_outline_rounded),
             title: const Text('Edit Profile'),
             trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => Navigator.pushNamed(context, '/profile'),
+            onTap: () => context.go('/profile'),
           ),
           ListTile(
             leading: const Icon(Icons.lock_outline_rounded),
             title: const Text('Change Password'),
             trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => Navigator.pushNamed(context, '/profile'),
+            onTap: () => context.go('/profile'),
           ),
 
           // ── Appearance ───────────────────────────────────────
@@ -92,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Text(
               '1.0.0',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ),

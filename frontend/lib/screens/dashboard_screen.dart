@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 import '../widgets/stat_card_widget.dart';
 import '../widgets/activity_chart_widget.dart';
@@ -50,6 +51,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => context.go('/home'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

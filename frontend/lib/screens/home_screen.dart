@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/router.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
               radius: 14,
               child: Icon(Icons.person, color: Colors.white, size: 16),
             ),
-            onPressed: () => Navigator.pushNamed(context, '/profile'),
+            onPressed: () => context.go('/profile'),
           ),
           const SizedBox(width: 8),
         ],
@@ -97,7 +97,7 @@ class HomeScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            onPressed: () => Navigator.pushNamed(context, '/upload'),
+            onPressed: () => context.go('/upload'),
             child: const Text('Upload Notes'),
           ),
         ],
@@ -127,7 +127,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildActionTile(BuildContext context, _ActionItem item) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, item.route),
+      onTap: () => context.go(item.route),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -183,7 +183,7 @@ class HomeScreen extends StatelessWidget {
         subtitle: Text(tool.subtitle,
             style: const TextStyle(fontSize: 12, color: Colors.grey)),
         trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () => Navigator.pushNamed(context, tool.route),
+        onTap: () => context.go(tool.route),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../core/api_client.dart';
@@ -45,9 +46,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load profile: $e')),
-        );
+        if (e.toString().contains('401')) {
+          context.go('/login');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load profile: $e')),
+          );
+        }
       }
     }
   }
@@ -153,6 +158,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile'),
         backgroundColor: const Color(0xFF6C63FF),
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => context.go('/home'),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -238,13 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () async {
                             await AuthService.logout();
-                            if (mounted) {
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/login',
-                                (route) => false,
-                              );
-                            }
+                            if (mounted) context.go('/login');
                           },
                           icon: const Icon(Icons.logout, color: Colors.red),
                           label: const Text(

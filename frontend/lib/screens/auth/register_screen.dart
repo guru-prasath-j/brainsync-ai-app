@@ -39,12 +39,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _fullNameController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) context.go('/home');
-    } on DioException catch (e) {
-      final msg = e.response?.data['detail'] ?? 'Registration failed. Please try again.';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Account created! Please sign in.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go('/login');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['detail']?.toString()
+          ?? e.message
+          ?? e.toString();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red, duration: const Duration(seconds: 8)),
         );
       }
     } finally {

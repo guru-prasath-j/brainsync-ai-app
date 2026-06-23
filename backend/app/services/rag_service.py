@@ -1,11 +1,12 @@
 """RAG (Retrieval-Augmented Generation) service using ChromaDB + GPT-4."""
+import os
 from typing import List, Optional
 import logging
 
+import httpx
 from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.chat import ChatMessage, ChatSession
 from app.services.vector_store import VectorStoreService
 
@@ -28,7 +29,10 @@ class RAGService:
     """Retrieval-Augmented Generation service for chat."""
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self.client = AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            http_client=httpx.AsyncClient(verify=False),
+        )
         self.vector_store = VectorStoreService()
 
     async def chat(
@@ -73,15 +77,16 @@ class RAGService:
     def _retrieve_context(self, user_id: int, note_id: int, query: str) -> str:
         """Retrieve relevant context chunks from ChromaDB."""
         try:
-            collection_name = f"user_{user_id}_note_{note_id}"
+            collection_name = f"note_{note_id}"
             results = self.vector_store.search(
                 collection_name=collection_name,
                 query=query,
                 n_results=4,
             )
-            if not results:
+            docs = results.get("documents", [])
+            if not docs:
                 return ""
-            return "\n\n---\n\n".join(results)
+            return "\n\n---\n\n".join(docs)
         except Exception as e:
             logger.warning(f"Context retrieval failed: {e}")
             return ""
