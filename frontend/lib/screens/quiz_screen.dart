@@ -151,11 +151,11 @@ class _QuizScreenState extends State<QuizScreen> {
                     Color borderColor;
                     if (_answerResult != null) {
                       if (i == correctIndex) {
-                        cardColor = Colors.green.shade100;
-                        borderColor = Colors.green;
+                        cardColor = const Color(0xFF0A2E0A);
+                        borderColor = Colors.green.shade400;
                       } else if (i == _selectedOption) {
-                        cardColor = Colors.red.shade100;
-                        borderColor = Colors.red;
+                        cardColor = const Color(0xFF2E0A0A);
+                        borderColor = Colors.red.shade400;
                       } else {
                         cardColor = Theme.of(context).colorScheme.surface;
                         borderColor = Theme.of(context).dividerColor;
@@ -214,11 +214,13 @@ class _QuizScreenState extends State<QuizScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: _answerResult!['is_correct']
-                            ? Colors.green.shade50
-                            : Colors.orange.shade50,
+                            ? const Color(0xFF0A2E0A)
+                            : const Color(0xFF2E1A00),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: _answerResult!['is_correct'] ? Colors.green : Colors.orange,
+                          color: _answerResult!['is_correct']
+                              ? Colors.green.shade400
+                              : Colors.orange.shade400,
                         ),
                       ),
                       child: Column(
@@ -229,14 +231,14 @@ class _QuizScreenState extends State<QuizScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _answerResult!['is_correct']
-                                  ? Colors.green.shade800
-                                  : Colors.red.shade800,
+                                  ? Colors.green.shade400
+                                  : Colors.orange.shade400,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _answerResult!['explanation'] ?? '',
-                            style: TextStyle(fontSize: 14, color: onSurface),
+                            style: const TextStyle(fontSize: 14, color: Colors.white70),
                           ),
                         ],
                       ),
