@@ -71,6 +71,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AuroraScaffold(
       appBar: AppBar(
         title: const Text('Upload Study Material'),
@@ -117,8 +118,8 @@ class _UploadScreenState extends State<UploadScreen> {
                               _selectedFile = null;
                               _titleController.clear();
                             }),
-                    icon: const Icon(Icons.close, size: 16, color: Colors.red),
-                    label: const Text('Remove', style: TextStyle(color: Colors.red)),
+                    icon: Icon(Icons.close, size: 16, color: colorScheme.error),
+                    label: Text('Remove', style: TextStyle(color: colorScheme.error)),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                   ),
                 ],

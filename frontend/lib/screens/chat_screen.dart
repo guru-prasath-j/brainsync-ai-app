@@ -334,9 +334,9 @@ class _InputBar extends StatelessWidget {
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: onSend,
-                        child: const Icon(
+                        child: Icon(
                           Icons.send_rounded,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           size: 20,
                         ),
                       ),

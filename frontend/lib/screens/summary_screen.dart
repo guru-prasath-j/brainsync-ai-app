@@ -57,7 +57,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
       setState(() { _error = e.toString(); _generating = false; });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }
@@ -76,12 +76,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _generating ? null : _generateSummary,
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.black,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         icon: _generating
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2),
               )
             : const Icon(Icons.auto_awesome),
         label: Text(_summary == null ? 'Generate Summary' : 'Regenerate'),
@@ -114,7 +114,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
           ],
         ],
       ),
@@ -210,7 +210,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

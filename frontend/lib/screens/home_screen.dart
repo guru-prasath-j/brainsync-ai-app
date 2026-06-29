@@ -149,11 +149,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildActionsGrid(BuildContext context) {
-    const actions = [
+    final actions = [
       _ActionItem(Icons.upload_file_outlined, 'Upload',    '/upload',    AppTheme.primary),
       _ActionItem(Icons.list_alt_outlined,    'My Notes',  '/notes',     AppTheme.secondary),
       _ActionItem(Icons.bar_chart_outlined,   'Dashboard', '/dashboard', AppTheme.accent),
-      _ActionItem(Icons.person_outline,       'Profile',   '/profile',   Color(0xFF00CFD5)),
+      _ActionItem(Icons.person_outline,       'Profile',   '/profile',   AppTheme.secondary),
     ];
 
     return GridView.count(
@@ -191,10 +191,10 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStudyTools(BuildContext context) {
-    const tools = [
+    final tools = [
       _ToolItem(Icons.style_outlined,      'Flashcards', '/flashcards', 'Memorize with spaced repetition', AppTheme.accent),
       _ToolItem(Icons.quiz_outlined,       'Quiz Mode',  '/quiz',       'Test your knowledge',             AppTheme.secondary),
-      _ToolItem(Icons.chat_bubble_outline, 'AI Chat',    '/chat',       'Ask questions about your notes',  Color(0xFF00CFD5)),
+      _ToolItem(Icons.chat_bubble_outline, 'AI Chat',    '/chat',       'Ask questions about your notes',  AppTheme.secondary),
       _ToolItem(Icons.summarize_outlined,  'Summaries',  '/summaries',  'AI-generated note summaries',     AppTheme.primary),
     ];
 

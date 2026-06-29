@@ -103,10 +103,10 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 28),
-                  const Text(
+                  Text(
                     'BrainSync AI',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 34,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
@@ -116,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'Your AI Study Companion',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       fontSize: 15,
                       letterSpacing: 0.3,
                     ),

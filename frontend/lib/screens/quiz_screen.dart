@@ -106,6 +106,8 @@ class _QuizScreenState extends State<QuizScreen> {
     final correctIndex = _answerResult?['correct_index'] as int?;
     final primary = Theme.of(context).colorScheme.primary;
     final onSurface = Theme.of(context).colorScheme.onSurface;
+    final successColor = Theme.of(context).colorScheme.secondary;
+    final errorColor = Theme.of(context).colorScheme.error;
 
     return Scaffold(
       appBar: AppBar(
@@ -151,11 +153,11 @@ class _QuizScreenState extends State<QuizScreen> {
                     Color borderColor;
                     if (_answerResult != null) {
                       if (i == correctIndex) {
-                        cardColor = const Color(0xFF0A2E0A);
-                        borderColor = Colors.green.shade400;
+                        cardColor = successColor.withOpacity(0.12);
+                        borderColor = successColor;
                       } else if (i == _selectedOption) {
-                        cardColor = const Color(0xFF2E0A0A);
-                        borderColor = Colors.red.shade400;
+                        cardColor = errorColor.withOpacity(0.12);
+                        borderColor = errorColor;
                       } else {
                         cardColor = Theme.of(context).colorScheme.surface;
                         borderColor = Theme.of(context).dividerColor;
@@ -214,13 +216,13 @@ class _QuizScreenState extends State<QuizScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: _answerResult!['is_correct']
-                            ? const Color(0xFF0A2E0A)
-                            : const Color(0xFF2E1A00),
+                            ? successColor.withOpacity(0.12)
+                            : errorColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: _answerResult!['is_correct']
-                              ? Colors.green.shade400
-                              : Colors.orange.shade400,
+                              ? successColor
+                              : errorColor,
                         ),
                       ),
                       child: Column(
@@ -230,15 +232,13 @@ class _QuizScreenState extends State<QuizScreen> {
                             _answerResult!['is_correct'] ? '✅ Correct!' : '❌ Incorrect',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _answerResult!['is_correct']
-                                  ? Colors.green.shade400
-                                  : Colors.orange.shade400,
+                              color: _answerResult!['is_correct'] ? successColor : errorColor,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _answerResult!['explanation'] ?? '',
-                            style: const TextStyle(fontSize: 14, color: Colors.white70),
+                            style: TextStyle(fontSize: 14, color: onSurface.withOpacity(0.75)),
                           ),
                         ],
                       ),
@@ -265,11 +265,11 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           strokeWidth: 2,
                         ),
                       )

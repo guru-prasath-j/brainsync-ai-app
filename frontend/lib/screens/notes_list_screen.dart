@@ -39,17 +39,20 @@ class _NotesListScreenState extends State<NotesListScreen> {
   Future<void> _deleteNote(NoteModel note) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Note'),
-        content: Text('Delete "${note.title}"? This cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Color(0xFFF87171))),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final errorColor = Theme.of(ctx).colorScheme.error;
+        return AlertDialog(
+          title: const Text('Delete Note'),
+          content: Text('Delete "${note.title}"? This cannot be undone.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Delete', style: TextStyle(color: errorColor)),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed == true) {
       try {
@@ -63,7 +66,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
           context.go('/login');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Theme.of(context).colorScheme.error),
           );
         }
       }
@@ -72,9 +75,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'processing': return const Color(0xFFFB923C);
-      case 'processed':  return AppTheme.secondary;
-      default:           return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
+      case 'processing': return Theme.of(context).colorScheme.secondary.withOpacity(0.85);
+      case 'processed':  return Theme.of(context).colorScheme.secondary;
+      default:           return Theme.of(context).colorScheme.onSurface.withOpacity(0.38);
     }
   }
 
@@ -105,7 +108,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Color(0xFFF87171)),
+                    Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
                     const SizedBox(height: 12),
                     Text('Failed to load notes', style: Theme.of(context).textTheme.titleMedium),
                     TextButton(onPressed: _refresh, child: const Text('Retry')),
@@ -200,7 +203,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Color(0xFFF87171), size: 20),
+                          icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
                           onPressed: () => _deleteNote(note),
                         ),
                       ],

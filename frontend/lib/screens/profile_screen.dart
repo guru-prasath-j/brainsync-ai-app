@@ -175,10 +175,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         child: Text(
                           _user!.initials,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).colorScheme.primary,
                               ),
-                              child: const Text('Save', style: TextStyle(color: Colors.white)),
+                              child: const Text('Save'),
                             ),
                           ],
                         ),
@@ -220,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           _user!.email,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
                               ),
                         ),
                         const SizedBox(height: 16),
@@ -247,13 +247,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             await AuthService.logout();
                             if (mounted) context.go('/login');
                           },
-                          icon: const Icon(Icons.logout, color: Colors.red),
-                          label: const Text(
+                          icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+                          label: Text(
                             'Logout',
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(color: Theme.of(context).colorScheme.error),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
+                            side: BorderSide(color: Theme.of(context).colorScheme.error),
                           ),
                         ),
                       ),

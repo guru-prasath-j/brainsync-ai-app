@@ -60,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Color(0xFFF87171)),
+                        Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
                         const SizedBox(height: 16),
                         Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)), textAlign: TextAlign.center),
                         const SizedBox(height: 16),

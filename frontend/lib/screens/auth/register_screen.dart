@@ -54,7 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ?? e.toString();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red, duration: const Duration(seconds: 8)),
+          SnackBar(content: Text(msg), backgroundColor: Theme.of(context).colorScheme.error, duration: const Duration(seconds: 8)),
         );
       }
     } finally {
@@ -175,7 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: _isLoading ? null : _register,
                       style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       child: _isLoading
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
                           : const Text('Create Account', style: TextStyle(fontSize: 16)),
                     ),
                     const SizedBox(height: 16),

@@ -60,7 +60,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       setState(() => _isGenerating = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to generate: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
@@ -107,8 +110,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _ResultBadge(Icons.check_circle, known.toString(), Colors.green),
-                _ResultBadge(Icons.cancel, unknown.toString(), Colors.red),
+                _ResultBadge(Icons.check_circle, known.toString(), Theme.of(context).colorScheme.secondary),
+                _ResultBadge(Icons.cancel, unknown.toString(), Theme.of(context).colorScheme.error),
               ],
             ),
           ],
@@ -194,13 +197,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     ),
                   ),
                   Row(children: [
-                    const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                    Icon(Icons.check_circle, size: 14, color: Theme.of(context).colorScheme.secondary),
                     const SizedBox(width: 4),
-                    Text('$known', style: const TextStyle(fontSize: 13, color: Colors.green)),
+                    Text('$known', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.secondary)),
                     const SizedBox(width: 12),
-                    const Icon(Icons.cancel, size: 14, color: Colors.red),
+                    Icon(Icons.cancel, size: 14, color: Theme.of(context).colorScheme.error),
                     const SizedBox(width: 4),
-                    Text('$unknown', style: const TextStyle(fontSize: 13, color: Colors.red)),
+                    Text('$unknown', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.error)),
                   ]),
                 ],
               ),
@@ -238,10 +241,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _rate(false),
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    label: const Text("Don't Know", style: TextStyle(color: Colors.red)),
+                    icon: Icon(Icons.close, color: Theme.of(context).colorScheme.error),
+                    label: Text("Don't Know", style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
+                      side: BorderSide(color: Theme.of(context).colorScheme.error),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -254,7 +257,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     icon: const Icon(Icons.check),
                     label: const Text('Got It!'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -380,7 +384,7 @@ class _CardFace extends StatelessWidget {
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -395,7 +399,7 @@ class _CardFace extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-              color: isQuestion ? primary : Colors.black54,
+              color: isQuestion ? primary : Theme.of(context).colorScheme.onPrimary.withOpacity(0.85),
             ),
           ),
           const SizedBox(height: 24),
@@ -408,7 +412,7 @@ class _CardFace extends StatelessWidget {
                 fontSize: 20,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
-                color: isQuestion ? onSurface : Colors.black,
+                color: isQuestion ? onSurface : Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),
@@ -417,7 +421,7 @@ class _CardFace extends StatelessWidget {
             isQuestion ? Icons.touch_app_outlined : Icons.lightbulb_outline,
             color: isQuestion
                 ? onSurface.withValues(alpha: 0.2)
-                : Colors.black38,
+                : Theme.of(context).colorScheme.onPrimary.withOpacity(0.95),
             size: 28,
           ),
         ],
@@ -464,10 +468,10 @@ class _EmptyState extends StatelessWidget {
             FilledButton.icon(
               onPressed: isGenerating ? null : onGenerate,
               icon: isGenerating
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary),
                     )
                   : const Icon(Icons.auto_awesome),
               label: Text(isGenerating ? 'Generating...' : 'Generate Flashcards'),

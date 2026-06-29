@@ -40,12 +40,14 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     final passed = percent >= 60;
     final questions = _session!['questions'] as List;
     final wrongAnswers = questions.where((q) => q['is_correct'] == false).toList();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quiz Results'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -59,21 +61,27 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                   const SizedBox(height: 16),
                   Text(passed ? '🎉' : '📚', style: const TextStyle(fontSize: 56)),
                   const SizedBox(height: 12),
-                  Text(passed ? 'Great Job!' : 'Keep Studying!',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    passed ? 'Great Job!' : 'Keep Studying!',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                  ),
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple.shade50,
+                      color: colorScheme.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       children: [
-                        Text('$score / $total',
-                          style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                        Text('$percent% Score',
-                          style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+                        Text(
+                          '$score / $total',
+                          style: TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: colorScheme.primary),
+                        ),
+                        Text(
+                          '$percent% Score',
+                          style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withOpacity(0.65)),
+                        ),
                       ],
                     ),
                   ),
@@ -82,8 +90,10 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
             ),
             if (wrongAnswers.isNotEmpty) ...[
               const SizedBox(height: 28),
-              const Text('Review Wrong Answers',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                'Review Wrong Answers',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 12),
               ...wrongAnswers.map((q) {
                 final options = q['options'] as List;
@@ -97,30 +107,42 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(q['question_text'],
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                        Text(
+                          q['question_text'],
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: colorScheme.onSurface),
+                        ),
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            const Icon(Icons.cancel, color: Colors.red, size: 18),
+                            Icon(Icons.cancel, color: colorScheme.error, size: 18),
                             const SizedBox(width: 6),
-                            Expanded(child: Text('Your answer: ${options[q['selected_index']]}',
-                              style: const TextStyle(color: Colors.red))),
+                            Expanded(
+                              child: Text(
+                                'Your answer: ${options[q['selected_index']]}',
+                                style: TextStyle(color: colorScheme.error),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                            Icon(Icons.check_circle, color: colorScheme.secondary, size: 18),
                             const SizedBox(width: 6),
-                            Expanded(child: Text('Correct: ${options[correctIdx]}',
-                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500))),
+                            Expanded(
+                              child: Text(
+                                'Correct: ${options[correctIdx]}',
+                                style: TextStyle(color: colorScheme.secondary, fontWeight: FontWeight.w500),
+                              ),
+                            ),
                           ],
                         ),
                         if (q['explanation'] != null && q['explanation'].toString().isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          Text(q['explanation'],
-                            style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                          Text(
+                            q['explanation'],
+                            style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withOpacity(0.7)),
+                          ),
                         ],
                       ],
                     ),
@@ -134,12 +156,12 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Back to Home', style: TextStyle(fontSize: 16)),
+                child: Text('Back to Home', style: TextStyle(fontSize: 16, color: colorScheme.onPrimary)),
               ),
             ),
             const SizedBox(height: 16),
