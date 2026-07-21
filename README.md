@@ -20,6 +20,11 @@ BrainSync AI turns your study notes and PDFs into interactive learning experienc
 
 ---
 
+
+
+<img width="716" height="1600" alt="IMG-20260623-WA0160 1" src="https://github.com/user-attachments/assets/86510066-e025-4f11-b766-07f69213972a" />
+
+
 ## Project Structure
 
 ```
