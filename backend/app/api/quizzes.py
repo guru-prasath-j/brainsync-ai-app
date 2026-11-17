@@ -169,7 +169,9 @@ async def submit_answer(
     if result['is_correct']:
         session.score += 1
 
-    # Check if all questions answered
+    # Check if all questions answered (flush first: autoflush is off, so the
+    # answer above wouldn't be included in the count otherwise)
+    db.flush()
     answered = db.query(QuizQuestion).filter(
         QuizQuestion.session_id == session.id,
         QuizQuestion.selected_index.isnot(None),
