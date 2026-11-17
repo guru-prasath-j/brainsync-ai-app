@@ -1,11 +1,10 @@
 """RAG (Retrieval-Augmented Generation) service using ChromaDB + GPT-4."""
-import os
 from typing import List, Optional
 import logging
 
-import httpx
-from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
+
+from app.core.llm import chat_completion
 
 from app.models.chat import ChatMessage, ChatSession
 from app.services.vector_store import VectorStoreService
@@ -29,10 +28,6 @@ class RAGService:
     """Retrieval-Augmented Generation service for chat."""
 
     def __init__(self):
-        self.client = AsyncOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            http_client=httpx.AsyncClient(verify=False),
-        )
         self.vector_store = VectorStoreService()
 
     async def chat(
@@ -65,8 +60,7 @@ class RAGService:
 
         messages.append({"role": "user", "content": message})
 
-        response = await self.client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = await chat_completion(
             messages=messages,
             max_tokens=1024,
             temperature=0.7,

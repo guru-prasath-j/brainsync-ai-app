@@ -21,7 +21,7 @@ services:
         value: "30"
       - key: CHROMA_DB_PATH
         value: /app/chroma_db
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false # entered manually in the dashboard
 
 databases:

@@ -2,20 +2,11 @@
 AI Service - GPT-4o-mini integration for text summarization.
 """
 import json
-import os
-from typing import Optional
 
-import httpx
 import openai
-from openai import AsyncOpenAI
 
-def _get_client() -> AsyncOpenAI:
-    key = os.getenv("OPENAI_API_KEY")
-    if not key:
-        raise RuntimeError("OPENAI_API_KEY is not set. AI features are unavailable.")
-    # verify=False bypasses AVG antivirus SSL interception in local dev
-    http_client = httpx.AsyncClient(verify=False)
-    return AsyncOpenAI(api_key=key, http_client=http_client)
+from app.core.llm import chat_completion
+
 
 SUMMARIZE_SYSTEM_PROMPT = """You are an expert study assistant that helps students understand complex material.
 When given text content, produce a structured summary with:
@@ -35,7 +26,6 @@ class AIService:
     """Service for AI-powered text analysis using GPT-4o-mini."""
 
     def __init__(self):
-        self.model = "gpt-4o-mini"
         self.max_tokens = 4096
 
     async def summarize(self, text: str, max_chunk_chars: int = 12000) -> dict:
@@ -54,8 +44,7 @@ class AIService:
             text = text[:max_chunk_chars] + "\n\n[Content truncated for summarization]"
 
         try:
-            response = await _get_client().chat.completions.create(
-                model=self.model,
+            response = await chat_completion(
                 max_tokens=self.max_tokens,
                 temperature=0.3,
                 messages=[
@@ -91,13 +80,12 @@ class AIService:
                 "concepts": [],
             }
         except openai.OpenAIError as e:
-            raise RuntimeError(f"OpenAI API error: {str(e)}") from e
+            raise RuntimeError(f"AI API error: {str(e)}") from e
 
     async def generate_title(self, text: str) -> str:
         """Generate a concise title for a piece of text."""
         truncated = text[:2000]
-        response = await _get_client().chat.completions.create(
-            model=self.model,
+        response = await chat_completion(
             max_tokens=30,
             temperature=0.5,
             messages=[
@@ -139,9 +127,7 @@ async def generate_flashcards(text: str, max_chunk_chars: int = 12000) -> list[d
     if len(text) > max_chunk_chars:
         text = text[:max_chunk_chars] + "\n\n[Content truncated]"
 
-    client = _get_client()
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = await chat_completion(
         max_tokens=2048,
         temperature=0.4,
         messages=[

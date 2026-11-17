@@ -1,13 +1,7 @@
-import os
 from typing import List, Dict, Any
 import json
-import httpx
-from openai import AsyncOpenAI
 
-client = AsyncOpenAI(
-    api_key=os.getenv('OPENAI_API_KEY'),
-    http_client=httpx.AsyncClient(verify=False),
-)
+from app.core.llm import chat_completion
 
 
 class QuizService:
@@ -29,8 +23,7 @@ class QuizService:
             f'- difficulty: "{difficulty}"\n\nReturn ONLY valid JSON.'
         )
 
-        response = await client.chat.completions.create(
-            model='gpt-4o-mini',
+        response = await chat_completion(
             messages=[{'role': 'user', 'content': prompt}],
             temperature=0.7,
         )
