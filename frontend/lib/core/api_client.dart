@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'constants.dart';
+
 class ApiClient {
-  static const String _baseUrl = 'http://localhost:8001';
+  static const String _baseUrl = AppConstants.baseUrl;
   static final ApiClient _singleton = ApiClient._internal();
 
   late final Dio _dio;
@@ -12,8 +14,9 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
+      // Free Render instances can take ~50s to wake up; AI calls can be slow.
+      connectTimeout: const Duration(seconds: 90),
+      receiveTimeout: const Duration(seconds: 120),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

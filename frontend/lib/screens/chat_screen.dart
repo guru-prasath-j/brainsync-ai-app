@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/constants.dart';
 import '../core/theme.dart';
 import '../widgets/chat_bubble_widget.dart';
 
@@ -42,7 +43,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  static const String _baseUrl = 'http://localhost:8001/api';
+  static const String _baseUrl = '${AppConstants.baseUrl}/api';
 
   final _messages = <_Message>[];
   final _controller = TextEditingController();

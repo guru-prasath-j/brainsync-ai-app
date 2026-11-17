@@ -1,14 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/constants.dart';
+
 class AuthService {
   static const String _tokenKey = 'auth_token';
-  static const String _baseUrl = 'http://localhost:8001/api';
+  static const String _baseUrl = '${AppConstants.baseUrl}/api';
 
   final Dio _dio = Dio(BaseOptions(
     baseUrl: _baseUrl,
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
+    connectTimeout: const Duration(seconds: 90),
+    receiveTimeout: const Duration(seconds: 60),
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
