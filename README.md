@@ -71,6 +71,59 @@ brainsync-ai-app/
 
 ---
 
+## How It Works
+
+### End-to-end flow
+
+```mermaid
+flowchart TD
+    A[Register / Login] -->|JWT issued| B[Upload PDF / text note]
+    B --> C[BackgroundTask: process_note]
+    C --> C1[Extract text - pdfplumber / plain read]
+    C1 --> C2[Clean text]
+    C2 --> C3[Chunk: 500 words, 50-word overlap]
+    C3 --> C4[Embed & store in ChromaDB collection note_&lcub;id&rcub;]
+    C4 --> D[Note status: processed]
+    D --> E[Summary]
+    D --> F[Flashcards]
+    D --> G[Quiz]
+    D --> H[RAG Chat]
+    D --> I[Progress Dashboard]
+```
+
+### 1. Auth
+`POST /api/auth/register` hashes the password (bcrypt) and creates the user, but does **not** auto-login — the Flutter app deliberately routes back to the login screen. `POST /api/auth/login` verifies the password and issues a JWT (HS256, `SECRET_KEY`, expiry from `ACCESS_TOKEN_EXPIRE_MINUTES`). Every protected route decodes the bearer token via `get_current_user` and loads the user by the token's `sub` claim.
+
+### 2. Note upload & ingestion
+`POST /api/notes/upload` saves the file to `uploads/{user_id}/{uuid}_{filename}` and creates a `Note` row (`status="uploaded"`), then kicks off ingestion as a FastAPI `BackgroundTask` (no Celery/Redis — runs in-process right after the response is sent):
+1. Extract text (`pdfplumber` for PDFs, plain read for `.txt`/`.md`)
+2. Clean whitespace/non-printable characters
+3. Chunk into ~500-word windows with 50-word overlap
+4. Embed and store each chunk in a per-note ChromaDB collection (`note_{note_id}`, cosine similarity), with `{note_id, user_id, chunk_index}` metadata
+5. Mark the note `processed` (or `failed` if extraction yields nothing)
+
+### 3. AI Summary
+`POST /api/summaries/{note_id}/generate` re-reads the source file, truncates to 12k characters, and makes a single GPT-4o-mini call (`temperature=0.3`) with a prompt that forces a strict JSON response: `{tldr, key_points, concepts}`. The result is upserted as one `Summary` row per note.
+
+### 4. Flashcards
+`POST /api/flashcards/{note_id}/generate` clears existing cards, re-extracts the note text, and asks GPT-4o-mini (`temperature=0.4`) for 8–12 Q&A pairs as JSON, persisted as `Flashcard` rows. `PATCH /api/flashcards/{id}/rate` records a simple known/unknown flag — self-assessment tracking, not a spaced-repetition scheduler.
+
+### 5. Quiz
+`POST /api/quizzes/{note_id}/generate` (note must already be `processed`) sends the first 4,000 characters of the note to GPT-4o-mini (`temperature=0.7`) requesting a JSON array of 4-option MCQs with explanations, stored as a `QuizSession` + `QuizQuestion` rows. `POST /api/quizzes/{session_id}/submit` grades answers with a plain server-side equality check (no AI call), updates the score, and marks the session complete once every question is answered.
+
+### 6. RAG Chat
+Chat messages optionally attach to a note. On each message, `RAGService` runs a semantic search (`n_results=4`) against that note's ChromaDB collection, joins the retrieved chunks as context, adds the last 10 messages of conversation history, and sends everything to GPT-4o-mini (`temperature=0.7`) to produce a grounded reply. Both the user message and the AI reply are persisted to the session history.
+
+### 7. Progress Dashboard
+`GET /api/progress/dashboard` is a pure SQL aggregation (no AI calls): total/processed note counts, quiz count and average score across completed sessions, total chat messages, a 7-day daily-activity histogram, and a day-streak counter derived by walking backward from today until the first day with no note upload.
+
+### Notes on the implementation
+- All AI generation calls (summary, flashcards, quiz, chat) are synchronous — the HTTP request blocks until OpenAI responds. Only ingestion runs in the background.
+- Each AI-calling service instantiates its own `AsyncOpenAI` client; there is no shared client wrapper, and all of them hardcode `gpt-4o-mini`.
+- The Flutter app talks to the API through a single Dio-based `ApiClient` that attaches the stored JWT to every request via an interceptor.
+
+---
+
 ## Backend Setup
 
 ### Prerequisites
