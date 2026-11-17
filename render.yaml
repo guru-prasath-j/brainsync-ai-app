@@ -24,6 +24,22 @@ services:
       - key: GEMINI_API_KEY
         sync: false # entered manually in the dashboard
 
+  # Flutter web app (static site). Flutter isn't preinstalled on Render, so the build installs it.
+  - type: web
+    name: brainsync-app
+    runtime: static
+    rootDir: frontend
+    buildCommand: >-
+      git clone --depth 1 --branch 3.41.7 https://github.com/flutter/flutter.git $HOME/flutter &&
+      $HOME/flutter/bin/flutter config --no-analytics &&
+      $HOME/flutter/bin/flutter pub get &&
+      $HOME/flutter/bin/flutter build web --release
+    staticPublishPath: build/web
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
 databases:
   - name: brainsync-db
     plan: free
